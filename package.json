@@ -1,0 +1,32 @@
+{
+  "name": "xiangqi-pet",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Desktop pet style Xiangqi trainer",
+  "type": "module",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "concurrently -k \"vite --host 127.0.0.1 --port 5188\" \"wait-on tcp:5188 && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5188 electron .\"",
+    "build": "tsc -p tsconfig.json && vite build && tsc -p tsconfig.electron.json",
+    "preview": "npm run build && electron ."
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^4.7.0",
+    "electron": "^31.7.7",
+    "lucide-react": "^0.468.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "vite": "^6.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "7zip-bin": "^5.2.0",
+    "concurrently": "^9.2.1",
+    "cross-env": "^7.0.3",
+    "innoextract-bin": "^0.2.0",
+    "typescript": "^6.0.3",
+    "wait-on": "^8.0.3"
+  }
+}

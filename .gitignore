@@ -1,0 +1,9 @@
+node_modules/
+dist/
+dist-electron/
+tmp/
+*.log
+electron.zip
+engines/**
+!engines/
+!engines/.gitkeep
