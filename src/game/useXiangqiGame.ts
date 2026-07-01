@@ -114,8 +114,11 @@ export function useXiangqiGame() {
 
   function switchSide() {
     setPlayerSide((side) => (side === 'red' ? 'black' : 'red'));
+    setState(createInitialState());
+    setUndoStack([]);
     setSelected(null);
     setHint(null);
+    setThinking(false);
   }
 
   function undo() {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeftRight, EyeOff, Lightbulb, Minus, Pin, PinOff, Power, RefreshCcw, ScanSearch, Sparkles, Undo2 } from 'lucide-react';
+import { EyeOff, Lightbulb, Minus, Pin, PinOff, Power, RefreshCcw, ScanSearch, Sparkles, Undo2 } from 'lucide-react';
 import { useXiangqiGame } from './game/useXiangqiGame';
 import { applyMove, createInitialBoard, getCheckmateMove, isPieceHanging, isPieceProtected, posKey, type Move } from './game/xiangqi';
 import { boardToFen, uciToMove } from './game/fen';
@@ -173,9 +173,9 @@ export default function App() {
         <IconButton title="复盘" onClick={runReview} disabled={reviewing || game.thinking}>
           <ScanSearch size={18} />
         </IconButton>
-        <IconButton title="换边" onClick={game.switchSide} disabled={game.thinking}>
-          <ArrowLeftRight size={18} />
-        </IconButton>
+        <button className="toggle" type="button" title="开局换边" onClick={game.switchSide} disabled={game.thinking}>
+          执{game.playerSide === 'red' ? '红' : '黑'}
+        </button>
         <label className="difficulty-select" title="陪练难度">
           <span>难度</span>
           <select value={game.difficulty} onChange={(event) => game.setDifficulty(event.target.value as typeof game.difficulty)}>

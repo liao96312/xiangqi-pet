@@ -58,6 +58,63 @@ const bookLines: BookLine[] = [
     ]
   },
   {
+    book: '橘中秘',
+    line: '顺炮横车 · 士6进5变',
+    source: '橘中秘 卷上 第一编 全局着法（得先）第一局旁注',
+    moves: [
+      { uci: 'h2e2', comment: '顺炮。' },
+      { uci: 'h7e7' },
+      { uci: 'h0g2' },
+      { uci: 'h9g7' },
+      { uci: 'i0i1' },
+      { uci: 'i9h9' },
+      { uci: 'i1d1' },
+      { uci: 'f9e8', comment: '士6进5，稳守中路。' },
+      { uci: 'b0c2' },
+      { uci: 'b9c7' },
+      { uci: 'a0b0' },
+      { uci: 'h9h5' }
+    ]
+  },
+  {
+    book: '橘中秘',
+    line: '顺炮横车 · 马2进3变',
+    source: '橘中秘 卷上 第一编 全局着法（得先）第一局旁注',
+    moves: [
+      { uci: 'h2e2', comment: '顺炮。' },
+      { uci: 'h7e7' },
+      { uci: 'h0g2' },
+      { uci: 'h9g7' },
+      { uci: 'i0i1' },
+      { uci: 'i9h9' },
+      { uci: 'i1d1' },
+      { uci: 'b9c7', comment: '马2进3，补右翼马。' },
+      { uci: 'b0c2' },
+      { uci: 'h9h5' },
+      { uci: 'a0b0' },
+      { uci: 'b7b4' }
+    ]
+  },
+  {
+    book: '橘中秘',
+    line: '顺炮横车 · 车8进4变',
+    source: '橘中秘 卷上 第一编 全局着法（得先）第一局旁注',
+    moves: [
+      { uci: 'h2e2', comment: '顺炮。' },
+      { uci: 'h7e7' },
+      { uci: 'h0g2' },
+      { uci: 'h9g7' },
+      { uci: 'i0i1' },
+      { uci: 'i9h9' },
+      { uci: 'i1d1' },
+      { uci: 'h9h5', comment: '车8进4，稳健多变。' },
+      { uci: 'b0c2' },
+      { uci: 'b9c7' },
+      { uci: 'a0b0' },
+      { uci: 'b7b4' }
+    ]
+  },
+  {
     book: '现代开局',
     line: '中炮屏风马',
     source: '常见中炮对屏风马开局',
