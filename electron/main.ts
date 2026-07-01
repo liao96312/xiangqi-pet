@@ -5,14 +5,15 @@ import { PikafishBridge } from './engine/pikafish.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const appRoot = path.join(__dirname, '..');
+const runtimeRoot = app.isPackaged ? process.resourcesPath : appRoot;
 const preloadPath = path.join(appRoot, 'electron', 'preload.cjs');
 
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let alwaysOnTop = false;
 let isQuitting = false;
-const analysisEngine = new PikafishBridge(appRoot);
-const playEngine = new PikafishBridge(appRoot);
+const analysisEngine = new PikafishBridge(runtimeRoot);
+const playEngine = new PikafishBridge(runtimeRoot);
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -97,7 +98,7 @@ app.whenReady().then(() => {
   createWindow();
   createTray();
 
-  ipcMain.handle('window:minimize', () => mainWindow?.minimize());
+  ipcMain.handle('window:minimize', () => mainWindow?.hide());
   ipcMain.handle('window:hide', () => mainWindow?.hide());
   ipcMain.handle('window:close', () => {
     isQuitting = true;

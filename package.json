@@ -1,18 +1,20 @@
 {
   "name": "xiangqi-pet",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Desktop pet style Xiangqi trainer",
   "type": "module",
   "main": "dist-electron/main.js",
   "scripts": {
-    "dev": "concurrently -k \"vite --host 127.0.0.1 --port 5188\" \"wait-on tcp:5188 && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5188 electron .\"",
+    "start": "node scripts/start.cjs",
+    "dev": "concurrently -k \"vite --host 127.0.0.1 --port 5188\" \"wait-on tcp:5188 && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5188 node scripts/start.cjs\"",
     "build": "tsc -p tsconfig.json && vite build && tsc -p tsconfig.electron.json",
-    "preview": "npm run build && electron ."
+    "selftest": "tsc -p tsconfig.selftest.json && node scripts/mark-selftest-commonjs.cjs && node .selftest/tests/xiangqi.selftest.js",
+    "build:installer": "npm run selftest && npm run build && electron-builder --win nsis --x64",
+    "preview": "npm run build && node scripts/start.cjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.7.0",
-    "electron": "^31.7.7",
     "lucide-react": "^0.468.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
@@ -25,8 +27,41 @@
     "7zip-bin": "^5.2.0",
     "concurrently": "^9.2.1",
     "cross-env": "^7.0.3",
+    "electron-builder": "^26.15.3",
+    "electron": "^31.7.7",
     "innoextract-bin": "^0.2.0",
     "typescript": "^6.0.3",
     "wait-on": "^8.0.3"
+  },
+  "build": {
+    "appId": "com.liao96312.xiangqipet",
+    "productName": "象棋桌宠",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**",
+      "dist-electron/**",
+      "electron/preload.cjs",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "engines",
+        "to": "engines",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "artifactName": "${productName}-Setup-${version}.${ext}"
   }
 }

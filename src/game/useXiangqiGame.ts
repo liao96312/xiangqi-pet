@@ -34,23 +34,61 @@ export const difficulties: Array<{
   blunderRate: number;
   delay: number;
   engineTime: number;
+  useEngine: boolean;
 }> = [
-  { key: 'book', label: '谱招练习', depth: 1, blunderRate: 0, delay: 120, engineTime: 0 },
-  { key: 'rookie', label: '入门', depth: 1, blunderRate: 0.34, delay: 120, engineTime: 450 },
-  { key: 'normal', label: '普通', depth: 2, blunderRate: 0.16, delay: 180, engineTime: 900 },
-  { key: 'advanced', label: '进阶', depth: 3, blunderRate: 0.06, delay: 240, engineTime: 1500 },
-  { key: 'strong', label: '强一些', depth: 4, blunderRate: 0, delay: 320, engineTime: 2600 }
+  { key: 'book', label: '谱招练习', depth: 1, blunderRate: 0, delay: 120, engineTime: 0, useEngine: false },
+  { key: 'rookie', label: '入门', depth: 1, blunderRate: 0.8, delay: 120, engineTime: 0, useEngine: false },
+  { key: 'normal', label: '普通', depth: 1, blunderRate: 0.35, delay: 180, engineTime: 0, useEngine: false },
+  { key: 'advanced', label: '进阶', depth: 2, blunderRate: 0.08, delay: 240, engineTime: 900, useEngine: true },
+  { key: 'strong', label: '强一些', depth: 3, blunderRate: 0, delay: 320, engineTime: 2200, useEngine: true }
 ];
 
+const SAVED_SETTINGS_KEY = 'xiangqi-pet-settings';
+
+type SavedSettings = Partial<{
+  autoAi: boolean;
+  difficulty: DifficultyKey;
+  playerSide: GameState['turn'];
+}>;
+
+function readSavedSettings(): SavedSettings {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = window.localStorage.getItem(SAVED_SETTINGS_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as SavedSettings;
+    return {
+      autoAi: typeof parsed.autoAi === 'boolean' ? parsed.autoAi : undefined,
+      difficulty: isDifficultyKey(parsed.difficulty) ? parsed.difficulty : undefined,
+      playerSide: parsed.playerSide === 'red' || parsed.playerSide === 'black' ? parsed.playerSide : undefined
+    };
+  } catch {
+    return {};
+  }
+}
+
+function writeSavedSettings(settings: Required<SavedSettings>) {
+  try {
+    window.localStorage.setItem(SAVED_SETTINGS_KEY, JSON.stringify(settings));
+  } catch {
+    // Ignore disabled storage; the game should still run.
+  }
+}
+
+function isDifficultyKey(value: unknown): value is DifficultyKey {
+  return typeof value === 'string' && difficulties.some((item) => item.key === value);
+}
+
 export function useXiangqiGame() {
+  const savedSettings = useMemo(readSavedSettings, []);
   const [state, setState] = useState<GameState>(() => createInitialState());
   const [undoStack, setUndoStack] = useState<GameState[]>([]);
   const [selected, setSelected] = useState<Pos | null>(null);
   const [hint, setHint] = useState<Move | null>(null);
   const [thinking, setThinking] = useState(false);
-  const [autoAi, setAutoAi] = useState(true);
-  const [playerSide, setPlayerSide] = useState<GameState['turn']>('red');
-  const [difficulty, setDifficulty] = useState<DifficultyKey>('book');
+  const [autoAi, setAutoAi] = useState(savedSettings.autoAi ?? true);
+  const [playerSide, setPlayerSide] = useState<GameState['turn']>(savedSettings.playerSide ?? 'red');
+  const [difficulty, setDifficulty] = useState<DifficultyKey>(savedSettings.difficulty ?? 'book');
   const [engineAvailable, setEngineAvailable] = useState(false);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
 
@@ -71,6 +109,10 @@ export function useXiangqiGame() {
   useEffect(() => {
     window.xiangqiPet?.engineStatus().then((status) => setEngineAvailable(status.available)).catch(() => setEngineAvailable(false));
   }, []);
+
+  useEffect(() => {
+    writeSavedSettings({ autoAi, difficulty, playerSide });
+  }, [autoAi, difficulty, playerSide]);
 
   useEffect(() => {
     let cancelled = false;
@@ -215,7 +257,7 @@ export function useXiangqiGame() {
         return;
       }
 
-      if (window.xiangqiPet?.playAnalyze) {
+      if (profile.useEngine && window.xiangqiPet?.playAnalyze) {
         try {
           const result = await window.xiangqiPet.playAnalyze({ fen: boardToFen(inputState.board, inputState.turn), movetime: profile.engineTime });
           const rawEngineMove = result.ok && result.bestMove ? uciToMove(result.bestMove, inputState.board) : null;
@@ -266,10 +308,14 @@ export function useXiangqiGame() {
 }
 
 function chooseAiMove(board: GameState['board'], side: GameState['turn'], depth: number, blunderRate: number) {
+  const allMoves = getLegalMoves(board, side);
+  if (blunderRate >= 0.7 && allMoves.length > 0 && Math.random() < blunderRate) {
+    return allMoves[Math.floor(Math.random() * allMoves.length)];
+  }
   const best = getBestMove(board, side, depth);
   if (!best || blunderRate <= 0 || Math.random() > blunderRate) return best;
 
-  const legal = getLegalMoves(board, side)
+  const legal = allMoves
     .map((move) => {
       const reply = getBestMove(applyMove(board, move), side === 'red' ? 'black' : 'red', Math.max(1, depth - 1));
       return { ...move, score: -(reply?.score ?? 0) + (move.capture ? 40 : 0) };

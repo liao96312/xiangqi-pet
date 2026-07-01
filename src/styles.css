@@ -254,10 +254,64 @@ button {
   white-space: nowrap;
 }
 
+.mate-banner {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  z-index: 6;
+  width: min(92%, 340px);
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: 7px;
+  min-height: 30px;
+  overflow: hidden;
+  padding: 5px 9px;
+  border: 1px solid rgba(167, 45, 36, 0.26);
+  border-radius: 8px;
+  color: #5c241e;
+  background:
+    linear-gradient(90deg, rgba(255, 236, 160, 0.96), rgba(255, 248, 223, 0.72)),
+    #fff4d4;
+  box-shadow: 0 0 0 1px rgba(255, 226, 141, 0.45), 0 4px 12px rgba(144, 66, 24, 0.16);
+  pointer-events: none;
+  transform: translateX(-50%);
+  animation: mate-banner-pop 1.45s ease-out;
+}
+
+.mate-banner span {
+  padding: 2px 5px;
+  border-radius: 999px;
+  color: #fff8e6;
+  background: #b6332c;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.mate-banner strong {
+  color: #9c201c;
+  font-size: 15px;
+}
+
+.mate-banner em {
+  min-width: 0;
+  overflow: hidden;
+  color: #76502d;
+  font-size: 12px;
+  font-style: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.board-stage,
 .board-wrap {
   min-height: 0;
   display: grid;
   place-items: center;
+}
+
+.board-stage {
+  position: relative;
 }
 
 .move-list {
@@ -293,31 +347,31 @@ button {
   max-width: 390px;
   aspect-ratio: 9 / 10;
   overflow: hidden;
-  border: 4px solid #7d5128;
-  border-radius: 14px;
+  border: 3px solid #8b755b;
+  border-radius: 7px;
   background:
-    radial-gradient(circle at 18% 10%, rgba(255, 238, 178, 0.68), transparent 28%),
-    linear-gradient(90deg, rgba(92, 55, 24, 0.08) 1px, transparent 1px),
-    repeating-linear-gradient(0deg, rgba(255, 235, 176, 0.08) 0 13px, rgba(90, 52, 20, 0.04) 14px 27px),
-    linear-gradient(180deg, #e9bc72 0%, #d99d56 55%, #c4843e 100%);
-  background-size: 100% 100%, 28px 100%, 100% 100%, 100% 100%;
+    linear-gradient(90deg, rgba(112, 75, 39, 0.04) 1px, transparent 1px),
+    repeating-linear-gradient(90deg, rgba(118, 78, 39, 0.035) 0 20px, rgba(255, 238, 194, 0.04) 21px 38px),
+    linear-gradient(180deg, #e6be7b 0%, #d9aa6b 54%, #c79255 100%);
+  background-size: 24px 100%, 100% 100%, 100% 100%;
   box-shadow:
-    inset 0 0 0 2px rgba(255, 236, 172, 0.9),
-    inset 0 0 0 8px rgba(82, 48, 22, 0.22),
-    inset 0 -24px 38px rgba(86, 48, 19, 0.28),
-    0 0 0 2px rgba(255, 222, 148, 0.45),
-    0 12px 26px rgba(42, 29, 17, 0.3);
+    inset 0 0 0 4px rgba(109, 72, 38, 0.28),
+    inset 0 0 0 7px rgba(255, 232, 177, 0.26),
+    0 2px 5px rgba(44, 32, 20, 0.28),
+    0 8px 18px rgba(42, 29, 17, 0.18);
 }
 
 .xiangqi-board::before {
   position: absolute;
-  inset: 7px;
+  inset: 8px;
   z-index: 0;
-  border: 1px solid rgba(95, 58, 27, 0.52);
-  border-radius: 9px;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 248, 210, 0.75),
-    inset 0 -2px 0 rgba(94, 57, 27, 0.34);
+  border: 1px solid rgba(82, 56, 34, 0.5);
+  border-radius: 3px;
+  background:
+    linear-gradient(90deg, rgba(95, 65, 39, 0.035) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(95, 65, 39, 0.03) 1px, transparent 1px);
+  background-size: 36px 100%, 100% 36px;
+  box-shadow: inset 0 0 8px rgba(120, 75, 34, 0.16);
   content: "";
 }
 
@@ -325,9 +379,7 @@ button {
   position: absolute;
   inset: 0;
   z-index: 0;
-  background:
-    linear-gradient(115deg, rgba(255, 255, 255, 0.18), transparent 28%),
-    radial-gradient(circle at 82% 88%, rgba(72, 37, 13, 0.12), transparent 36%);
+  background: linear-gradient(180deg, rgba(255, 246, 213, 0.08), transparent 42%, rgba(91, 61, 36, 0.06));
   pointer-events: none;
   content: "";
 }
@@ -338,23 +390,23 @@ button {
   z-index: 1;
   fill: none;
   pointer-events: none;
-  stroke: rgba(58, 36, 18, 0.82);
+  stroke: rgba(82, 58, 35, 0.95);
   stroke-linecap: square;
-  stroke-width: 1.85;
+  stroke-width: 2;
 }
 
 .board-lines .river-text {
-  fill: rgba(95, 64, 34, 0.24);
+  fill: rgba(116, 82, 49, 0.26);
   font-family: KaiTi, STKaiti, "Microsoft YaHei", serif;
-  font-size: 42px;
+  font-size: 40px;
   font-weight: 800;
   letter-spacing: 8px;
   stroke: none;
 }
 
 .board-lines .file-label {
-  fill: rgba(76, 54, 34, 0.56);
-  font-size: 28px;
+  fill: rgba(84, 60, 35, 0.6);
+  font-size: 24px;
   font-weight: 800;
   letter-spacing: 0;
   stroke: none;
@@ -363,15 +415,15 @@ button {
 
 .board-lines .point-marker {
   fill: none;
-  stroke: rgba(83, 57, 34, 0.62);
-  stroke-width: 1.8;
+  stroke: rgba(91, 66, 40, 0.82);
+  stroke-width: 1.5;
 }
 
 .cell {
   -webkit-app-region: no-drag;
   position: absolute;
   z-index: 2;
-  width: 9.1%;
+  width: 10.6%;
   aspect-ratio: 1;
   display: grid;
   place-items: center;
@@ -488,24 +540,25 @@ button {
   aspect-ratio: 1;
   display: grid;
   place-items: center;
-  border: 2px solid #8f5726;
+  border: 2px solid #8b6238;
   border-radius: 50%;
-  background: url("./assets/piece-lacquer.png") center / 136% 136% no-repeat #d58b38;
+  background:
+    radial-gradient(circle at 34% 24%, rgba(255, 248, 211, 0.58) 0 11%, transparent 23%),
+    radial-gradient(circle at 50% 42%, #f5d795 0 48%, #dda85e 69%, #a56d38 100%);
   box-shadow:
-    inset 0 0 0 3px rgba(255, 238, 181, 0.92),
-    inset 0 0 0 6px rgba(126, 72, 28, 0.3),
-    inset 0 -6px 9px rgba(82, 43, 13, 0.36),
-    0 2px 0 rgba(255, 226, 152, 0.62),
-    0 4px 4px rgba(54, 30, 12, 0.42),
-    0 10px 12px rgba(54, 30, 12, 0.22);
+    inset 0 0 0 3px rgba(255, 236, 178, 0.82),
+    inset 0 0 0 6px rgba(108, 70, 36, 0.14),
+    inset 0 -3px 5px rgba(82, 49, 24, 0.2),
+    0 2px 2px rgba(52, 34, 18, 0.38),
+    0 5px 7px rgba(52, 34, 18, 0.18);
   font-family: KaiTi, STKaiti, "Microsoft YaHei", serif;
-  font-size: clamp(18px, 5.2vw, 26px);
+  font-size: clamp(18px, 5.1vw, 23px);
   font-weight: 900;
-  line-height: 1;
+  line-height: 0.98;
   text-shadow:
-    0 1px 0 rgba(255, 237, 170, 0.72),
-    0 2px 2px rgba(69, 36, 12, 0.18),
-    0 0 1px currentColor;
+    0 1px 0 rgba(255, 239, 178, 0.45),
+    0 0 1px currentColor,
+    0 0 0.5px currentColor;
 }
 
 .piece {
@@ -514,22 +567,23 @@ button {
 
 .piece::before {
   position: absolute;
-  inset: 12%;
-  border: 1px solid rgba(112, 62, 22, 0.42);
+  inset: 7%;
+  border: 1.5px solid currentColor;
   border-radius: 50%;
-  box-shadow: inset 0 1px 0 rgba(255, 246, 205, 0.72);
+  opacity: 0.7;
+  box-shadow: inset 0 1px 0 rgba(255, 246, 205, 0.7);
   content: "";
   z-index: -1;
 }
 
 .piece::after {
   position: absolute;
-  left: 18%;
-  top: 13%;
-  width: 38%;
-  height: 18%;
+  left: 20%;
+  top: 14%;
+  width: 34%;
+  height: 15%;
   border-radius: 50%;
-  background: rgba(255, 255, 236, 0.48);
+  background: rgba(255, 255, 236, 0.34);
   filter: blur(1px);
   content: "";
   z-index: -1;
@@ -548,16 +602,21 @@ button {
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
   min-height: 38px;
+}
+
+.toolbar .icon-button {
+  width: 30px;
+  height: 30px;
 }
 
 .difficulty-select {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  height: 32px;
-  padding: 0 7px;
+  height: 30px;
+  padding: 0 6px;
   border: 1px solid rgba(72, 54, 34, 0.16);
   border-radius: 999px;
   color: #4b3d2b;
@@ -567,7 +626,7 @@ button {
 }
 
 .difficulty-select select {
-  max-width: 62px;
+  max-width: 54px;
   border: 0;
   color: inherit;
   background: transparent;
@@ -577,13 +636,13 @@ button {
 }
 
 .toggle {
-  height: 32px;
-  min-width: 52px;
+  height: 30px;
+  min-width: 44px;
   border: 1px solid rgba(72, 54, 34, 0.16);
   border-radius: 999px;
   color: #4b3d2b;
   background: rgba(255, 251, 241, 0.74);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -639,6 +698,29 @@ button {
   50% {
     filter: drop-shadow(0 0 12px rgba(196, 67, 42, 1));
     transform: scale(1.1);
+  }
+}
+
+@keyframes mate-banner-pop {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-6px) scale(0.98);
+  }
+
+  28% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1.02);
+  }
+
+  58% {
+    box-shadow:
+      0 0 0 1px rgba(255, 226, 141, 0.7),
+      0 0 18px rgba(203, 65, 43, 0.44);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
   }
 }
 

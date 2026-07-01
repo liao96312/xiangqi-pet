@@ -28,6 +28,12 @@ export interface GameState {
   history: Move[];
 }
 
+export interface CheckmateTactic {
+  move: Move;
+  name: string;
+  description: string;
+}
+
 const pieceValue: Record<PieceType, number> = {
   king: 10000,
   rook: 600,
@@ -161,9 +167,40 @@ export function getCheckmateMove(board: Board, side: Side): Move | null {
   for (const move of orderMoves(getLegalMoves(board, side))) {
     const nextBoard = applyMove(board, move);
     const rival = opposite(side);
-    if (!findKing(nextBoard, rival) || (isInCheck(nextBoard, rival) && getLegalMoves(nextBoard, rival).length === 0)) return move;
+    const rivalMoves = getLegalMoves(nextBoard, rival);
+    if (!findKing(nextBoard, rival) || rivalMoves.length === 0) return move;
   }
   return null;
+}
+
+export function getCheckmateTactic(board: Board, side: Side): CheckmateTactic | null {
+  const move = getCheckmateMove(board, side);
+  if (!move) return null;
+  const nextBoard = applyMove(board, move);
+  const rival = opposite(side);
+  const king = findKing(nextBoard, rival) ?? findKing(board, rival);
+  const moved = nextBoard[move.to.row][move.to.col];
+  if (moved?.type === 'king' && move.capture?.type === 'king') return { move, name: '对面笑', description: '将帅同线无阻，借规则成杀' };
+  if (move.capture?.type === 'king' && hasRookHorseAttack(board, side, move.to)) return { move, name: '列马车', description: '车马配合成杀' };
+  if (!king || !moved) return { move, name: '绝杀', description: '一步成杀' };
+
+  const attackers = attackingPieces(nextBoard, side, king);
+  const sameLineCannons = piecesOnKingLine(nextBoard, side, king, 'cannon');
+  const rooks = attackers.filter((item) => item.piece.type === 'rook');
+  const horses = attackers.filter((item) => item.piece.type === 'horse');
+  const blockedByOwnAdvisor = palacePieces(nextBoard, rival).some((item) => item.piece.type === 'advisor');
+
+  if (!isInCheck(nextBoard, rival)) return { move, name: '困毙', description: '对方无子可走' };
+  if (sameLineCannons.length >= 2) return { move, name: '重炮', description: '双炮同线成杀' };
+  if (moved.type === 'horse' && isCrouchingHorse(move.to, rival)) return { move, name: '卧槽马', description: '马入肋道，直接控将' };
+  if (moved.type === 'horse' && isFishingHorse(move.to, rival)) return { move, name: '钓鱼马', description: '马挂角控制将门' };
+  if (rooks.length >= 2 || (moved.type === 'rook' && countPieces(nextBoard, side, 'rook') >= 2)) return { move, name: '双车错', description: '双车交错压杀' };
+  if (rooks.length > 0 && horses.length > 0) return { move, name: '列马车', description: '车马配合成杀' };
+  if (moved.type === 'cannon' && countPieces(nextBoard, side, 'cannon') >= 2 && countPieces(nextBoard, side, 'rook') > 0) return { move, name: '夹车炮', description: '车炮夹击将门' };
+  if (isSeaBottomMoon(nextBoard, side, rival, move)) return { move, name: '海底捞月', description: '车炮借帅力，炮沉底线成杀' };
+  if (blockedByOwnAdvisor) return { move, name: '闷宫', description: '借对方士象堵宫成杀' };
+  if (moved.type === 'rook' || moved.type === 'cannon') return { move, name: '铁门栓', description: '封住将门成杀' };
+  return { move, name: '绝杀', description: '一步成杀' };
 }
 
 export function posKey(pos: Pos) {
@@ -426,6 +463,67 @@ function clearBetween(board: Board, a: Pos, b: Pos): boolean {
 function inPalace(pos: Pos, side: Side) {
   const rowOk = side === 'red' ? pos.row >= 7 && pos.row <= 9 : pos.row >= 0 && pos.row <= 2;
   return rowOk && pos.col >= 3 && pos.col <= 5;
+}
+
+function attackingPieces(board: Board, side: Side, target: Pos) {
+  const result: Array<{ piece: Piece; pos: Pos }> = [];
+  forEachPiece(board, (piece, pos) => {
+    if (piece.side === side && getPieceTargets(board, pos, piece).some((item) => samePos(item, target))) {
+      result.push({ piece, pos });
+    }
+  });
+  return result;
+}
+
+function palacePieces(board: Board, side: Side) {
+  const result: Array<{ piece: Piece; pos: Pos }> = [];
+  forEachPiece(board, (piece, pos) => {
+    if (piece.side === side && inPalace(pos, side)) result.push({ piece, pos });
+  });
+  return result;
+}
+
+function countPieces(board: Board, side: Side, type: PieceType) {
+  let count = 0;
+  forEachPiece(board, (piece) => {
+    if (piece.side === side && piece.type === type) count += 1;
+  });
+  return count;
+}
+
+function piecesOnKingLine(board: Board, side: Side, king: Pos, type: PieceType) {
+  const result: Array<{ piece: Piece; pos: Pos }> = [];
+  forEachPiece(board, (piece, pos) => {
+    if (piece.side === side && piece.type === type && (pos.row === king.row || pos.col === king.col)) result.push({ piece, pos });
+  });
+  return result;
+}
+
+function hasRookHorseAttack(board: Board, side: Side, target: Pos) {
+  const attackers = attackingPieces(board, side, target);
+  return attackers.some((item) => item.piece.type === 'rook') && attackers.some((item) => item.piece.type === 'horse');
+}
+
+function isCrouchingHorse(pos: Pos, rival: Side) {
+  return rival === 'black' ? pos.row === 2 && (pos.col === 3 || pos.col === 5) : pos.row === 7 && (pos.col === 3 || pos.col === 5);
+}
+
+function isFishingHorse(pos: Pos, rival: Side) {
+  return rival === 'black' ? pos.row === 2 && (pos.col === 2 || pos.col === 6) : pos.row === 7 && (pos.col === 2 || pos.col === 6);
+}
+
+function isSeaBottomMoon(board: Board, side: Side, rival: Side, move: Move) {
+  const moved = board[move.to.row][move.to.col];
+  const ownKing = findKing(board, side);
+  const enemyBackRank = rival === 'black' ? 0 : 9;
+  return (
+    moved?.type === 'cannon' &&
+    move.to.row === enemyBackRank &&
+    ownKing?.col === 4 &&
+    countPieces(board, side, 'rook') > 0 &&
+    countPieces(board, side, 'cannon') > 0 &&
+    countPieces(board, rival, 'rook') > 0
+  );
 }
 
 function emptyBoard(): Board {

@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": ".selftest",
+    "module": "CommonJS",
+    "isolatedModules": false,
+    "types": ["node"]
+  },
+  "include": ["src/game/xiangqi.ts", "tests/**/*.ts"]
+}

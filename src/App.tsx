@@ -1,10 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
 import { EyeOff, Lightbulb, Minus, Pin, PinOff, Power, RefreshCcw, ScanSearch, Sparkles, Undo2 } from 'lucide-react';
 import { useXiangqiGame } from './game/useXiangqiGame';
-import { applyMove, createInitialBoard, getCheckmateMove, isPieceHanging, isPieceProtected, posKey, type Move } from './game/xiangqi';
+import { applyMove, createInitialBoard, getCheckmateTactic, isPieceHanging, isPieceProtected, posKey, type Move } from './game/xiangqi';
 import { boardToFen, uciToMove } from './game/fen';
 import { moveNotation } from './game/notation';
 import type { Pos } from './game/xiangqi';
+
+const FLIPPED_VIEW_KEY = 'xiangqi-pet-flipped';
+
+function readSavedFlipped() {
+  try {
+    return window.localStorage.getItem(FLIPPED_VIEW_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
 
 export default function App() {
   const game = useXiangqiGame();
@@ -13,13 +23,22 @@ export default function App() {
   const [windowError, setWindowError] = useState('');
   const [reviewing, setReviewing] = useState(false);
   const [review, setReview] = useState('');
+  const [flipped, setFlipped] = useState(readSavedFlipped);
 
   useEffect(() => {
     window.xiangqiPet?.getAlwaysOnTop().then(setAlwaysOnTop).catch(() => {});
   }, []);
 
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(FLIPPED_VIEW_KEY, String(flipped));
+    } catch {
+      // Ignore disabled storage; the button still works for this session.
+    }
+  }, [flipped]);
+
   const legalTargetKeys = useMemo(() => new Set(game.legalTargets.map(posKey)), [game.legalTargets]);
-  const checkmateMove = useMemo(() => getCheckmateMove(game.state.board, game.state.turn), [game.state.board, game.state.turn]);
+  const checkmateTactic = useMemo(() => getCheckmateTactic(game.state.board, game.state.turn), [game.state.board, game.state.turn]);
   const selectedHanging = !!game.selected && isPieceHanging(game.state.board, game.selected);
   const lastMove = game.state.history.at(-1) ?? null;
   const captureLine = lastMove?.capture ? `吃掉${lastMove.capture.side === 'red' ? '红' : '黑'}${pieceLabelView(lastMove.capture)}` : '';
@@ -27,8 +46,8 @@ export default function App() {
     ? moveNotation(game.state.board, game.hint)
     : game.bookSuggestions.length
       ? `谱招：${game.bookSuggestions.slice(0, 3).map((item) => item.label).join(' / ')}`
-      : checkmateMove
-        ? `有绝杀：${moveNotation(game.state.board, checkmateMove)}`
+      : checkmateTactic
+        ? `${checkmateTactic.name}：${moveNotation(game.state.board, checkmateTactic.move)}`
         : selectedHanging
           ? '此子无保护，会被对面吃'
       : game.bookPractice
@@ -146,7 +165,10 @@ export default function App() {
       <AnalysisPanel analysis={game.analysis} board={game.state.board} turn={game.state.turn} bookSuggestion={game.bookSuggestion} />
       {review ? <section className="review-panel">{review}</section> : null}
 
-      <Board board={game.state.board} selected={game.selected} legalTargetKeys={legalTargetKeys} hint={game.hint} checkmateMove={checkmateMove} lastMove={lastMove} onChoose={game.choose} />
+      <section className="board-stage">
+        <Board board={game.state.board} selected={game.selected} legalTargetKeys={legalTargetKeys} hint={game.hint} checkmateMove={checkmateTactic?.move ?? null} lastMove={lastMove} flipped={flipped} onChoose={game.choose} />
+        {checkmateTactic ? <MateBanner key={`${checkmateTactic.name}-${posKey(checkmateTactic.move.from)}-${posKey(checkmateTactic.move.to)}`} tactic={checkmateTactic} board={game.state.board} /> : null}
+      </section>
 
       <MoveList history={game.state.history} />
 
@@ -164,7 +186,7 @@ export default function App() {
         <IconButton title="AI 提示" active={!!game.hint} onClick={game.showHint} disabled={game.thinking || !!game.state.winner}>
           <Lightbulb size={18} />
         </IconButton>
-        <IconButton title="黑方 AI 走一步" onClick={() => game.makeAiMove()} disabled={game.state.turn !== 'black' || game.thinking}>
+        <IconButton title="AI 走一步" onClick={() => game.makeAiMove()} disabled={game.thinking || game.state.turn === game.playerSide}>
           <Sparkles size={18} />
         </IconButton>
         <IconButton title="悔棋" onClick={game.undo} disabled={!game.canUndo || game.thinking}>
@@ -175,6 +197,9 @@ export default function App() {
         </IconButton>
         <button className="toggle" type="button" title="开局换边" onClick={game.switchSide} disabled={game.thinking}>
           执{game.playerSide === 'red' ? '红' : '黑'}
+        </button>
+        <button className={flipped ? 'toggle active' : 'toggle'} type="button" title="翻转视角" onClick={() => setFlipped((value) => !value)}>
+          翻转
         </button>
         <label className="difficulty-select" title="陪练难度">
           <span>难度</span>
@@ -223,6 +248,16 @@ function MoveList({ history }: { history: Move[] }) {
           {item.round}.{item.side} {item.label}
         </span>
       ))}
+    </section>
+  );
+}
+
+function MateBanner({ tactic, board }: { tactic: NonNullable<ReturnType<typeof getCheckmateTactic>>; board: ReturnType<typeof useXiangqiGame>['state']['board'] }) {
+  return (
+    <section className="mate-banner" aria-live="polite">
+      <span>绝杀</span>
+      <strong>{tactic.name}</strong>
+      <em>{moveNotation(board, tactic.move)} · {tactic.description}</em>
     </section>
   );
 }
@@ -307,6 +342,7 @@ function Board({
   hint,
   checkmateMove,
   lastMove,
+  flipped,
   onChoose
 }: {
   board: ReturnType<typeof useXiangqiGame>['state']['board'];
@@ -315,6 +351,7 @@ function Board({
   hint: ReturnType<typeof useXiangqiGame>['hint'];
   checkmateMove: Move | null;
   lastMove: ReturnType<typeof useXiangqiGame>['state']['history'][number] | null;
+  flipped: boolean;
   onChoose: (pos: Pos) => void;
 }) {
   const hintFrom = hint ? posKey(hint.from) : '';
@@ -327,15 +364,19 @@ function Board({
   const selectedKey = selected ? posKey(selected) : '';
   const selectedUnprotected = selected && board[selected.row][selected.col] ? !isPieceProtected(board, selected) : false;
   const selectedHanging = selected ? isPieceHanging(board, selected) : false;
-  const point = (pos: Pos) => ({
-    left: `${5.5556 + pos.col * 11.1111}%`,
-    top: `${9 + pos.row * 9}%`
-  });
+  const displayPos = (pos: Pos) => (flipped ? { row: 9 - pos.row, col: 8 - pos.col } : pos);
+  const point = (pos: Pos) => {
+    const display = displayPos(pos);
+    return {
+      left: `${5.5556 + display.col * 11.1111}%`,
+      top: `${9 + display.row * 9}%`
+    };
+  };
 
   return (
     <section className="board-wrap" aria-label="中国象棋棋盘">
       <div className="xiangqi-board">
-        <BoardLines />
+        <BoardLines flipped={flipped} />
         {board.map((row, rowIndex) =>
           row.map((piece, colIndex) => {
             const pos = { row: rowIndex, col: colIndex };
@@ -368,11 +409,11 @@ function Board({
   );
 }
 
-function BoardLines() {
+function BoardLines({ flipped }: { flipped: boolean }) {
   const verticals = Array.from({ length: 9 }, (_, index) => 50 + index * 100);
   const horizontals = Array.from({ length: 10 }, (_, index) => 90 + index * 90);
-  const topFiles = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
-  const bottomFiles = ['9', '8', '7', '6', '5', '4', '3', '2', '1'];
+  const topFiles = flipped ? ['9', '8', '7', '6', '5', '4', '3', '2', '1'] : ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
+  const bottomFiles = flipped ? ['1', '2', '3', '4', '5', '6', '7', '8', '9'] : ['9', '8', '7', '6', '5', '4', '3', '2', '1'];
   const markers = [
     [1, 2],
     [7, 2],
