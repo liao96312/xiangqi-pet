@@ -9,10 +9,17 @@
   box-sizing: border-box;
 }
 
+html,
+#root {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
 body {
   margin: 0;
-  min-width: 100vw;
-  min-height: 100vh;
+  width: 100vw;
+  height: 100vh;
   overflow: hidden;
   background: transparent;
 }
@@ -23,12 +30,15 @@ button {
 }
 
 .pet-shell {
+  position: relative;
   width: min(100vw, 430px);
-  height: min(100vh, 620px);
-  display: grid;
-  grid-template-rows: auto auto auto auto auto minmax(0, 1fr) auto auto;
+  height: 100%;
+  max-height: 760px;
+  display: flex;
+  flex-direction: column;
   gap: 7px;
-  padding: 12px;
+  padding: 12px 12px 60px;
+  overflow: hidden;
   border: 1px solid rgba(74, 56, 34, 0.24);
   border-radius: 22px;
   background: rgba(250, 242, 226, 0.9);
@@ -39,6 +49,7 @@ button {
 .compact-shell {
   width: 220px;
   height: 58px;
+  display: grid;
   grid-template-rows: auto;
   padding: 8px;
   border-radius: 999px;
@@ -46,6 +57,7 @@ button {
 
 .pet-titlebar {
   -webkit-app-region: no-drag;
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -136,6 +148,7 @@ button {
 }
 
 .status-strip {
+  flex: 0 0 auto;
   display: grid;
   grid-template-columns: auto auto 1fr;
   align-items: center;
@@ -165,6 +178,7 @@ button {
 }
 
 .eval-panel {
+  flex: 0 0 auto;
   display: grid;
   gap: 5px;
   min-height: 34px;
@@ -210,6 +224,7 @@ button {
 }
 
 .analysis-panel {
+  flex: 0 0 auto;
   display: grid;
   gap: 3px;
   min-height: 48px;
@@ -243,6 +258,7 @@ button {
 }
 
 .review-panel {
+  flex: 0 0 auto;
   min-height: 28px;
   overflow: hidden;
   padding: 5px 8px;
@@ -305,6 +321,7 @@ button {
 
 .board-stage,
 .board-wrap {
+  width: 100%;
   min-height: 0;
   display: grid;
   place-items: center;
@@ -312,9 +329,16 @@ button {
 
 .board-stage {
   position: relative;
+  flex: 0 0 auto;
+  overflow: hidden;
+}
+
+.board-wrap {
+  height: auto;
 }
 
 .move-list {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -343,9 +367,9 @@ button {
 
 .xiangqi-board {
   position: relative;
-  width: min(100%, calc((100vh - 292px) * 0.9));
-  max-width: 390px;
+  width: min(100%, 200px);
   aspect-ratio: 9 / 10;
+  flex: 0 1 auto;
   overflow: hidden;
   border: 3px solid #8b755b;
   border-radius: 7px;
@@ -598,6 +622,12 @@ button {
 }
 
 .toolbar {
+  flex: 0 0 auto;
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  left: 12px;
+  z-index: 12;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -761,6 +791,12 @@ button {
   background: #9f3b30;
   font-weight: 800;
   cursor: pointer;
+}
+
+@media (max-height: 680px) {
+  .xiangqi-board {
+    width: min(100%, 180px);
+  }
 }
 
 @media (max-width: 330px), (max-height: 460px) {

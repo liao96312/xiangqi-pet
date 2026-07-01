@@ -18,9 +18,9 @@ const playEngine = new PikafishBridge(runtimeRoot);
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 430,
-    height: 620,
+    height: 760,
     minWidth: 260,
-    minHeight: 300,
+    minHeight: 620,
     frame: false,
     transparent: true,
     resizable: true,
