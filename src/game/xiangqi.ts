@@ -435,7 +435,7 @@ function pawnMoves(from: Pos, side: Side) {
   return result;
 }
 
-function isInCheck(board: Board, side: Side): boolean {
+export function isInCheck(board: Board, side: Side): boolean {
   const king = findKing(board, side);
   if (!king) return true;
   return getPseudoMoves(board, opposite(side)).some((move) => samePos(move.to, king));

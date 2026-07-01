@@ -319,6 +319,26 @@ button {
   white-space: nowrap;
 }
 
+.check-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 18;
+  display: grid;
+  place-items: center;
+  color: #b6211d;
+  font-family: KaiTi, STKaiti, "Microsoft YaHei", serif;
+  font-size: clamp(96px, 25vw, 170px);
+  font-weight: 900;
+  line-height: 1;
+  pointer-events: none;
+  text-shadow:
+    0 3px 0 rgba(255, 236, 176, 0.86),
+    0 0 18px rgba(197, 47, 32, 0.62),
+    0 10px 26px rgba(66, 28, 16, 0.3);
+  transform-origin: center;
+  animation: check-flash-pop 0.82s cubic-bezier(0.18, 0.9, 0.22, 1) both;
+}
+
 .board-stage,
 .board-wrap {
   width: 100%;
@@ -457,6 +477,30 @@ button {
   background: transparent;
   cursor: pointer;
   transform: translate(-50%, -50%);
+}
+
+.moving-cell {
+  position: absolute;
+  z-index: 9;
+  width: 10.6%;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(1.08);
+  transition:
+    left 0.22s cubic-bezier(0.16, 0.88, 0.34, 1),
+    top 0.22s cubic-bezier(0.16, 0.88, 0.34, 1),
+    transform 0.22s ease;
+}
+
+.moving-cell .piece {
+  width: 100%;
+  animation: moving-piece-pop 0.26s ease both;
+}
+
+.cell.move-arriving .piece {
+  opacity: 0;
 }
 
 .cell.legal::after,
@@ -705,6 +749,49 @@ button {
   }
 }
 
+@keyframes moving-piece-pop {
+  0% {
+    filter: drop-shadow(0 2px 3px rgba(68, 38, 16, 0.25));
+    transform: scale(0.96);
+  }
+
+  72% {
+    filter: drop-shadow(0 8px 9px rgba(68, 38, 16, 0.28));
+    transform: scale(1.08);
+  }
+
+  100% {
+    filter: drop-shadow(0 3px 5px rgba(68, 38, 16, 0.18));
+    transform: scale(1);
+  }
+}
+
+@keyframes check-flash-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.46) rotate(-7deg);
+  }
+
+  16% {
+    opacity: 1;
+    transform: scale(1.18) rotate(2deg);
+  }
+
+  30% {
+    transform: scale(0.96) rotate(-1deg);
+  }
+
+  62% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.34);
+  }
+}
+
 @keyframes unprotected-green-glow {
   0%,
   100% {
@@ -827,5 +914,14 @@ button {
   .icon-button {
     width: 30px;
     height: 30px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .moving-cell,
+  .moving-cell .piece,
+  .check-flash {
+    animation: none;
+    transition: none;
   }
 }

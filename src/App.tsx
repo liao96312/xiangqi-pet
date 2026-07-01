@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { EyeOff, Lightbulb, Minus, Pin, PinOff, Power, RefreshCcw, ScanSearch, Sparkles, Undo2 } from 'lucide-react';
 import { useXiangqiGame } from './game/useXiangqiGame';
-import { applyMove, createInitialBoard, getCheckmateTactic, isPieceHanging, isPieceProtected, posKey, type Move } from './game/xiangqi';
+import { applyMove, createInitialBoard, getCheckmateTactic, isInCheck, isPieceHanging, isPieceProtected, posKey, type Move } from './game/xiangqi';
 import { boardToFen, uciToMove } from './game/fen';
 import { moveNotation } from './game/notation';
 import type { Pos } from './game/xiangqi';
@@ -24,6 +24,8 @@ export default function App() {
   const [reviewing, setReviewing] = useState(false);
   const [review, setReview] = useState('');
   const [flipped, setFlipped] = useState(readSavedFlipped);
+  const [moveAnimationKey, setMoveAnimationKey] = useState('');
+  const [checkFlashKey, setCheckFlashKey] = useState('');
 
   useEffect(() => {
     window.xiangqiPet?.getAlwaysOnTop().then(setAlwaysOnTop).catch(() => {});
@@ -41,6 +43,8 @@ export default function App() {
   const checkmateTactic = useMemo(() => getCheckmateTactic(game.state.board, game.state.turn), [game.state.board, game.state.turn]);
   const selectedHanging = !!game.selected && isPieceHanging(game.state.board, game.selected);
   const lastMove = game.state.history.at(-1) ?? null;
+  const lastMoveKey = lastMove ? `${game.state.history.length}-${posKey(lastMove.from)}-${posKey(lastMove.to)}` : '';
+  const isCheckingSide = !game.state.winner && isInCheck(game.state.board, game.state.turn);
   const captureLine = lastMove?.capture ? `吃掉${lastMove.capture.side === 'red' ? '红' : '黑'}${pieceLabelView(lastMove.capture)}` : '';
   const hintLine = game.hint
     ? moveNotation(game.state.board, game.hint)
@@ -54,6 +58,20 @@ export default function App() {
         ? '已脱谱，请按谱招回到谱线'
         : '等你开口';
   const engineText = game.engineAvailable ? `Pikafish ${game.analysis?.depth ? `d${game.analysis.depth}` : '已连接'}` : '内置陪练';
+
+  useEffect(() => {
+    if (!lastMoveKey) return;
+    setMoveAnimationKey(lastMoveKey);
+    const timeout = window.setTimeout(() => setMoveAnimationKey(''), 260);
+    return () => window.clearTimeout(timeout);
+  }, [lastMoveKey]);
+
+  useEffect(() => {
+    if (!lastMoveKey || !isCheckingSide) return;
+    setCheckFlashKey(lastMoveKey);
+    const timeout = window.setTimeout(() => setCheckFlashKey(''), 900);
+    return () => window.clearTimeout(timeout);
+  }, [isCheckingSide, lastMoveKey]);
 
   async function togglePin() {
     try {
@@ -166,8 +184,9 @@ export default function App() {
       {review ? <section className="review-panel">{review}</section> : null}
 
       <section className="board-stage">
-        <Board board={game.state.board} selected={game.selected} legalTargetKeys={legalTargetKeys} hint={game.hint} checkmateMove={checkmateTactic?.move ?? null} lastMove={lastMove} flipped={flipped} onChoose={game.choose} />
+        <Board board={game.state.board} selected={game.selected} legalTargetKeys={legalTargetKeys} hint={game.hint} checkmateMove={checkmateTactic?.move ?? null} lastMove={lastMove} moveAnimationKey={moveAnimationKey} flipped={flipped} onChoose={game.choose} />
         {checkmateTactic ? <MateBanner key={`${checkmateTactic.name}-${posKey(checkmateTactic.move.from)}-${posKey(checkmateTactic.move.to)}`} tactic={checkmateTactic} board={game.state.board} /> : null}
+        {checkFlashKey ? <CheckFlash key={checkFlashKey} /> : null}
       </section>
 
       <MoveList history={game.state.history} />
@@ -262,6 +281,14 @@ function MateBanner({ tactic, board }: { tactic: NonNullable<ReturnType<typeof g
   );
 }
 
+function CheckFlash() {
+  return (
+    <div className="check-flash" aria-live="assertive" role="status">
+      将
+    </div>
+  );
+}
+
 function AnalysisPanel({
   analysis,
   board,
@@ -342,6 +369,7 @@ function Board({
   hint,
   checkmateMove,
   lastMove,
+  moveAnimationKey,
   flipped,
   onChoose
 }: {
@@ -351,6 +379,7 @@ function Board({
   hint: ReturnType<typeof useXiangqiGame>['hint'];
   checkmateMove: Move | null;
   lastMove: ReturnType<typeof useXiangqiGame>['state']['history'][number] | null;
+  moveAnimationKey: string;
   flipped: boolean;
   onChoose: (pos: Pos) => void;
 }) {
@@ -372,11 +401,13 @@ function Board({
       top: `${9 + display.row * 9}%`
     };
   };
+  const movingPiece = moveAnimationKey && lastMove ? board[lastMove.to.row][lastMove.to.col] : null;
 
   return (
     <section className="board-wrap" aria-label="中国象棋棋盘">
       <div className="xiangqi-board">
         <BoardLines flipped={flipped} />
+        {movingPiece && lastMove ? <MovingPiece key={moveAnimationKey} piece={movingPiece} from={point(lastMove.from)} to={point(lastMove.to)} /> : null}
         {board.map((row, rowIndex) =>
           row.map((piece, colIndex) => {
             const pos = { row: rowIndex, col: colIndex };
@@ -390,6 +421,7 @@ function Board({
               lastFrom === key ? 'last-from' : '',
               lastTo === key ? 'last-to' : '',
               lastTo === key && lastWasCapture ? 'capture-to' : '',
+              moveAnimationKey && lastTo === key ? 'move-arriving' : '',
               hintFrom === key ? 'hint-from' : '',
               hintTo === key ? 'hint-to' : '',
               mateFrom === key ? 'mate-from' : '',
@@ -406,6 +438,29 @@ function Board({
         )}
       </div>
     </section>
+  );
+}
+
+function MovingPiece({
+  piece,
+  from,
+  to
+}: {
+  piece: NonNullable<ReturnType<typeof useXiangqiGame>['state']['board'][number][number]>;
+  from: { left: string; top: string };
+  to: { left: string; top: string };
+}) {
+  const [settled, setSettled] = useState(false);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => setSettled(true));
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
+  return (
+    <span className="moving-cell" style={settled ? to : from} aria-hidden="true">
+      <span className={`piece ${piece.side}`}>{pieceLabelView(piece)}</span>
+    </span>
   );
 }
 
