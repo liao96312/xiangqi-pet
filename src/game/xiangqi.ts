@@ -195,6 +195,7 @@ export function getCheckmateTactic(board: Board, side: Side): CheckmateTactic | 
   if (moved.type === 'horse' && isCrouchingHorse(move.to, rival)) return { move, name: '卧槽马', description: '马入肋道，直接控将' };
   if (moved.type === 'horse' && isFishingHorse(move.to, rival)) return { move, name: '钓鱼马', description: '马挂角控制将门' };
   if (rooks.length >= 2 || (moved.type === 'rook' && countPieces(nextBoard, side, 'rook') >= 2)) return { move, name: '双车错', description: '双车交错压杀' };
+  if (isSideTiger(nextBoard, side, rival, king, rooks)) return { move, name: '侧面虎', description: '车在侧面照将，马控将门成杀' };
   if (rooks.length > 0 && horses.length > 0) return { move, name: '列马车', description: '车马配合成杀' };
   if (moved.type === 'cannon' && countPieces(nextBoard, side, 'cannon') >= 2 && countPieces(nextBoard, side, 'rook') > 0) return { move, name: '夹车炮', description: '车炮夹击将门' };
   if (isSeaBottomMoon(nextBoard, side, rival, move)) return { move, name: '海底捞月', description: '车炮借帅力，炮沉底线成杀' };
@@ -491,6 +492,14 @@ function countPieces(board: Board, side: Side, type: PieceType) {
   return count;
 }
 
+function piecesAt(board: Board, side: Side, type: PieceType) {
+  const result: Array<{ piece: Piece; pos: Pos }> = [];
+  forEachPiece(board, (piece, pos) => {
+    if (piece.side === side && piece.type === type) result.push({ piece, pos });
+  });
+  return result;
+}
+
 function piecesOnKingLine(board: Board, side: Side, king: Pos, type: PieceType) {
   const result: Array<{ piece: Piece; pos: Pos }> = [];
   forEachPiece(board, (piece, pos) => {
@@ -510,6 +519,18 @@ function isCrouchingHorse(pos: Pos, rival: Side) {
 
 function isFishingHorse(pos: Pos, rival: Side) {
   return rival === 'black' ? pos.row === 2 && (pos.col === 2 || pos.col === 6) : pos.row === 7 && (pos.col === 2 || pos.col === 6);
+}
+
+function isSideTiger(board: Board, side: Side, rival: Side, king: Pos, checkingRooks: Array<{ piece: Piece; pos: Pos }>) {
+  if (king.col === 4) return false;
+  if (!checkingRooks.some((item) => item.pos.row === king.row)) return false;
+
+  const forward = rival === 'black' ? 1 : -1;
+  const guard = { row: king.row + forward, col: king.col };
+  const outsideCol = king.col < 4 ? king.col - 1 : king.col + 1;
+  const tiger = { row: king.row + forward * 3, col: outsideCol };
+
+  return attackingPieces(board, side, guard).some((item) => item.piece.type === 'horse') || piecesAt(board, side, 'horse').some((item) => samePos(item.pos, tiger));
 }
 
 function isSeaBottomMoon(board: Board, side: Side, rival: Side, move: Move) {

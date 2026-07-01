@@ -113,6 +113,17 @@ function rookHorseMate() {
   expectTactic('列马车', board);
 }
 
+function sideTigerMate() {
+  const board = emptyBoard();
+  board[9][4] = { side: 'red', type: 'king' };
+  board[0][3] = { side: 'black', type: 'king' };
+  board[0][5] = { side: 'black', type: 'advisor' };
+  board[2][3] = { side: 'black', type: 'advisor' };
+  board[1][2] = { side: 'red', type: 'rook' };
+  board[3][2] = { side: 'red', type: 'horse' };
+  expectTactic('侧面虎', board);
+}
+
 function smotheredPalaceMate() {
   const board = emptyBoard();
   board[9][0] = { side: 'red', type: 'king' };
@@ -188,6 +199,7 @@ crouchingHorseMate();
 fishingHorseMate();
 doubleRookMate();
 rookHorseMate();
+sideTigerMate();
 smotheredPalaceMate();
 ironBoltMate();
 doubleCannonMate();
