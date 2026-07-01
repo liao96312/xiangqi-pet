@@ -191,13 +191,18 @@ export function getCheckmateTactic(board: Board, side: Side): CheckmateTactic | 
   const blockedByOwnAdvisor = palacePieces(nextBoard, rival).some((item) => item.piece.type === 'advisor');
 
   if (!isInCheck(nextBoard, rival)) return { move, name: '困毙', description: '对方无子可走' };
+  if (isDoubleHorseSpring(nextBoard, side, rival, king)) return { move, name: '双马饮泉', description: '双马逼近九宫，轮番控将成杀' };
+  if (isHorseCannonMate(nextBoard, side, king)) return { move, name: '马后炮', description: '马作炮架，炮在马后照将成杀' };
   if (sameLineCannons.length >= 2) return { move, name: '重炮', description: '双炮同线成杀' };
   if (moved.type === 'horse' && isCrouchingHorse(move.to, rival)) return { move, name: '卧槽马', description: '马入肋道，直接控将' };
   if (moved.type === 'horse' && isFishingHorse(move.to, rival)) return { move, name: '钓鱼马', description: '马挂角控制将门' };
+  if (isOctagonalHorse(nextBoard, side, rival, king)) return { move, name: '八角马', description: '马定士角，限制将帅活动成杀' };
+  if (isCornerHorse(nextBoard, side, rival, king, horses)) return { move, name: '挂角马', description: '马挂士角，配合子力成杀' };
   if (rooks.length >= 2 || (moved.type === 'rook' && countPieces(nextBoard, side, 'rook') >= 2)) return { move, name: '双车错', description: '双车交错压杀' };
   if (isSideTiger(nextBoard, side, rival, king, rooks)) return { move, name: '侧面虎', description: '车在侧面照将，马控将门成杀' };
   if (rooks.length > 0 && horses.length > 0) return { move, name: '列马车', description: '车马配合成杀' };
   if (moved.type === 'cannon' && countPieces(nextBoard, side, 'cannon') >= 2 && countPieces(nextBoard, side, 'rook') > 0) return { move, name: '夹车炮', description: '车炮夹击将门' };
+  if (isHeavenEarthCannon(nextBoard, side, rival, king)) return { move, name: '天地炮', description: '中炮镇心，底炮沉宫成杀' };
   if (isSeaBottomMoon(nextBoard, side, rival, move)) return { move, name: '海底捞月', description: '车炮借帅力，炮沉底线成杀' };
   if (blockedByOwnAdvisor) return { move, name: '闷宫', description: '借对方士象堵宫成杀' };
   if (moved.type === 'rook' || moved.type === 'cannon') return { move, name: '铁门栓', description: '封住将门成杀' };
@@ -461,6 +466,23 @@ function clearBetween(board: Board, a: Pos, b: Pos): boolean {
   return true;
 }
 
+function piecesBetween(board: Board, a: Pos, b: Pos) {
+  const result: Array<{ piece: Piece; pos: Pos }> = [];
+  const rowStep = Math.sign(b.row - a.row);
+  const colStep = Math.sign(b.col - a.col);
+  if (rowStep !== 0 && colStep !== 0) return result;
+
+  let row = a.row + rowStep;
+  let col = a.col + colStep;
+  while (row !== b.row || col !== b.col) {
+    const piece = board[row][col];
+    if (piece) result.push({ piece, pos: { row, col } });
+    row += rowStep;
+    col += colStep;
+  }
+  return result;
+}
+
 function inPalace(pos: Pos, side: Side) {
   const rowOk = side === 'red' ? pos.row >= 7 && pos.row <= 9 : pos.row >= 0 && pos.row <= 2;
   return rowOk && pos.col >= 3 && pos.col <= 5;
@@ -521,6 +543,48 @@ function isFishingHorse(pos: Pos, rival: Side) {
   return rival === 'black' ? pos.row === 2 && (pos.col === 2 || pos.col === 6) : pos.row === 7 && (pos.col === 2 || pos.col === 6);
 }
 
+function isDoubleHorseSpring(board: Board, side: Side, rival: Side, king: Pos) {
+  const horses = piecesAt(board, side, 'horse');
+  if (horses.length < 2) return false;
+
+  const forward = rival === 'black' ? 1 : -1;
+  const guardSquares = [
+    { row: king.row + forward, col: king.col },
+    { row: king.row, col: king.col - 1 },
+    { row: king.row, col: king.col + 1 }
+  ].filter((pos) => inside(pos.row, pos.col));
+
+  const activeHorses = horses.filter(({ pos }) => guardSquares.some((guard) => horseMoves(board, pos).some((target) => samePos(target, guard))));
+  return activeHorses.length >= 2;
+}
+
+function isHorseCannonMate(board: Board, side: Side, king: Pos) {
+  for (const cannon of piecesAt(board, side, 'cannon')) {
+    if (cannon.pos.row !== king.row && cannon.pos.col !== king.col) continue;
+    const between = piecesBetween(board, cannon.pos, king);
+    if (between.length === 1 && between[0].piece.side === side && between[0].piece.type === 'horse') return true;
+  }
+  return false;
+}
+
+function isHeavenEarthCannon(board: Board, side: Side, rival: Side, king: Pos) {
+  const cannons = piecesAt(board, side, 'cannon');
+  if (cannons.length < 2) return false;
+
+  const backRank = rival === 'black' ? 0 : 9;
+  const hasBottomCannon = cannons.some(({ pos }) => pos.row === backRank);
+  const hasCenterCannon = cannons.some(({ pos }) => pos.col === king.col || pos.col === 4);
+  return hasBottomCannon && hasCenterCannon;
+}
+
+function isOctagonalHorse(board: Board, side: Side, rival: Side, king: Pos) {
+  return piecesAt(board, side, 'horse').some(({ pos }) => isAdvisorCorner(pos, rival) && Math.abs(pos.row - king.row) >= 2 && Math.abs(pos.col - king.col) === 1);
+}
+
+function isCornerHorse(board: Board, side: Side, rival: Side, king: Pos, checkingHorses: Array<{ piece: Piece; pos: Pos }>) {
+  return checkingHorses.some(({ pos }) => isAdvisorCorner(pos, rival)) || piecesAt(board, side, 'horse').some(({ pos }) => isAdvisorCorner(pos, rival) && horseMoves(board, pos).some((target) => samePos(target, king)));
+}
+
 function isSideTiger(board: Board, side: Side, rival: Side, king: Pos, checkingRooks: Array<{ piece: Piece; pos: Pos }>) {
   if (king.col === 4) return false;
   if (!checkingRooks.some((item) => item.pos.row === king.row)) return false;
@@ -531,6 +595,11 @@ function isSideTiger(board: Board, side: Side, rival: Side, king: Pos, checkingR
   const tiger = { row: king.row + forward * 3, col: outsideCol };
 
   return attackingPieces(board, side, guard).some((item) => item.piece.type === 'horse') || piecesAt(board, side, 'horse').some((item) => samePos(item.pos, tiger));
+}
+
+function isAdvisorCorner(pos: Pos, side: Side) {
+  const rows = side === 'black' ? [0, 2] : [7, 9];
+  return rows.includes(pos.row) && (pos.col === 3 || pos.col === 5);
 }
 
 function isSeaBottomMoon(board: Board, side: Side, rival: Side, move: Move) {

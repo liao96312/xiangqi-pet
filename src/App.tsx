@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { EyeOff, Lightbulb, Minus, Pin, PinOff, Power, RefreshCcw, ScanSearch, Sparkles, Undo2 } from 'lucide-react';
 import { useXiangqiGame } from './game/useXiangqiGame';
 import { applyMove, createInitialBoard, getCheckmateTactic, isInCheck, isPieceHanging, isPieceProtected, posKey, type Move } from './game/xiangqi';
@@ -7,6 +7,12 @@ import { moveNotation } from './game/notation';
 import type { Pos } from './game/xiangqi';
 
 const FLIPPED_VIEW_KEY = 'xiangqi-pet-flipped';
+
+type MoveAnimation = {
+  key: string;
+  move: Move;
+  reverse?: boolean;
+};
 
 function readSavedFlipped() {
   try {
@@ -24,9 +30,12 @@ export default function App() {
   const [reviewing, setReviewing] = useState(false);
   const [review, setReview] = useState('');
   const [flipped, setFlipped] = useState(readSavedFlipped);
-  const [moveAnimationKey, setMoveAnimationKey] = useState('');
+  const [moveAnimation, setMoveAnimation] = useState<MoveAnimation | null>(null);
+  const [settleAnimation, setSettleAnimation] = useState<{ key: string; pos: Pos } | null>(null);
+  const [captureBurst, setCaptureBurst] = useState<{ key: string; pos: Pos } | null>(null);
   const [checkFlashKey, setCheckFlashKey] = useState('');
   const [mateFlash, setMateFlash] = useState<{ key: string; text: string } | null>(null);
+  const previousHistoryRef = useRef<Move[]>(game.state.history);
 
   useEffect(() => {
     window.xiangqiPet?.getAlwaysOnTop().then(setAlwaysOnTop).catch(() => {});
@@ -62,11 +71,35 @@ export default function App() {
   const engineText = game.engineAvailable ? `Pikafish ${game.analysis?.depth ? `d${game.analysis.depth}` : '已连接'}` : '内置陪练';
 
   useEffect(() => {
-    if (!lastMoveKey) return;
-    setMoveAnimationKey(lastMoveKey);
-    const timeout = window.setTimeout(() => setMoveAnimationKey(''), 260);
-    return () => window.clearTimeout(timeout);
-  }, [lastMoveKey]);
+    const previous = previousHistoryRef.current;
+    const current = game.state.history;
+    const timers: number[] = [];
+
+    if (current.length > previous.length) {
+      const move = current.at(-1);
+      if (move) {
+        const key = `${current.length}-${posKey(move.from)}-${posKey(move.to)}`;
+        setMoveAnimation({ key, move });
+        if (move.capture) setCaptureBurst({ key, pos: move.to });
+        timers.push(window.setTimeout(() => setMoveAnimation(null), 260));
+        timers.push(window.setTimeout(() => setSettleAnimation({ key, pos: move.to }), 235));
+        timers.push(window.setTimeout(() => setSettleAnimation(null), 520));
+        timers.push(window.setTimeout(() => setCaptureBurst(null), 520));
+      }
+    } else if (current.length < previous.length && previous.length - current.length <= 2) {
+      const move = previous.at(-1);
+      if (move) {
+        const key = `undo-${previous.length}-${posKey(move.to)}-${posKey(move.from)}`;
+        setMoveAnimation({ key, move, reverse: true });
+        timers.push(window.setTimeout(() => setMoveAnimation(null), 260));
+        timers.push(window.setTimeout(() => setSettleAnimation({ key, pos: move.from }), 235));
+        timers.push(window.setTimeout(() => setSettleAnimation(null), 520));
+      }
+    }
+
+    previousHistoryRef.current = current;
+    return () => timers.forEach((timer) => window.clearTimeout(timer));
+  }, [game.state.history]);
 
   useEffect(() => {
     if (!lastMoveKey || !isCheckingSide) return;
@@ -193,7 +226,7 @@ export default function App() {
       {review ? <section className="review-panel">{review}</section> : null}
 
       <section className="board-stage">
-        <Board board={game.state.board} selected={game.selected} legalTargetKeys={legalTargetKeys} hint={game.hint} checkmateMove={checkmateTactic?.move ?? null} lastMove={lastMove} moveAnimationKey={moveAnimationKey} flipped={flipped} onChoose={game.choose} />
+        <Board board={game.state.board} selected={game.selected} legalTargetKeys={legalTargetKeys} hint={game.hint} checkmateMove={checkmateTactic?.move ?? null} lastMove={lastMove} moveAnimation={moveAnimation} settleAnimation={settleAnimation} captureBurst={captureBurst} flipped={flipped} onChoose={game.choose} />
         {checkmateTactic ? <MateBanner key={`${checkmateTactic.name}-${posKey(checkmateTactic.move.from)}-${posKey(checkmateTactic.move.to)}`} tactic={checkmateTactic} board={game.state.board} /> : null}
         {checkFlashKey ? <BoardFlash key={checkFlashKey} text="将" /> : null}
         {mateFlash ? <BoardFlash key={mateFlash.key} text={mateFlash.text} variant="mate" /> : null}
@@ -396,7 +429,9 @@ function Board({
   hint,
   checkmateMove,
   lastMove,
-  moveAnimationKey,
+  moveAnimation,
+  settleAnimation,
+  captureBurst,
   flipped,
   onChoose
 }: {
@@ -406,7 +441,9 @@ function Board({
   hint: ReturnType<typeof useXiangqiGame>['hint'];
   checkmateMove: Move | null;
   lastMove: ReturnType<typeof useXiangqiGame>['state']['history'][number] | null;
-  moveAnimationKey: string;
+  moveAnimation: MoveAnimation | null;
+  settleAnimation: { key: string; pos: Pos } | null;
+  captureBurst: { key: string; pos: Pos } | null;
   flipped: boolean;
   onChoose: (pos: Pos) => void;
 }) {
@@ -428,13 +465,28 @@ function Board({
       top: `${9 + display.row * 9}%`
     };
   };
-  const movingPiece = moveAnimationKey && lastMove ? board[lastMove.to.row][lastMove.to.col] : null;
+  const movingPiece = moveAnimation
+    ? moveAnimation.reverse
+      ? board[moveAnimation.move.from.row][moveAnimation.move.from.col]
+      : board[moveAnimation.move.to.row][moveAnimation.move.to.col]
+    : null;
+  const movingArrivalKey = moveAnimation ? posKey(moveAnimation.reverse ? moveAnimation.move.from : moveAnimation.move.to) : '';
+  const settleKey = settleAnimation ? posKey(settleAnimation.pos) : '';
 
   return (
     <section className="board-wrap" aria-label="中国象棋棋盘">
       <div className="xiangqi-board">
         <BoardLines flipped={flipped} />
-        {movingPiece && lastMove ? <MovingPiece key={moveAnimationKey} piece={movingPiece} from={point(lastMove.from)} to={point(lastMove.to)} /> : null}
+        {captureBurst ? <CaptureBurst key={captureBurst.key} point={point(captureBurst.pos)} /> : null}
+        {movingPiece && moveAnimation ? (
+          <MovingPiece
+            key={moveAnimation.key}
+            piece={movingPiece}
+            from={point(moveAnimation.reverse ? moveAnimation.move.to : moveAnimation.move.from)}
+            to={point(moveAnimation.reverse ? moveAnimation.move.from : moveAnimation.move.to)}
+            reverse={moveAnimation.reverse}
+          />
+        ) : null}
         {board.map((row, rowIndex) =>
           row.map((piece, colIndex) => {
             const pos = { row: rowIndex, col: colIndex };
@@ -448,7 +500,8 @@ function Board({
               lastFrom === key ? 'last-from' : '',
               lastTo === key ? 'last-to' : '',
               lastTo === key && lastWasCapture ? 'capture-to' : '',
-              moveAnimationKey && lastTo === key ? 'move-arriving' : '',
+              movingArrivalKey === key ? 'move-arriving' : '',
+              settleKey === key ? 'move-settled' : '',
               hintFrom === key ? 'hint-from' : '',
               hintTo === key ? 'hint-to' : '',
               mateFrom === key ? 'mate-from' : '',
@@ -471,11 +524,13 @@ function Board({
 function MovingPiece({
   piece,
   from,
-  to
+  to,
+  reverse
 }: {
   piece: NonNullable<ReturnType<typeof useXiangqiGame>['state']['board'][number][number]>;
   from: { left: string; top: string };
   to: { left: string; top: string };
+  reverse?: boolean;
 }) {
   const [settled, setSettled] = useState(false);
 
@@ -485,8 +540,21 @@ function MovingPiece({
   }, []);
 
   return (
-    <span className="moving-cell" style={settled ? to : from} aria-hidden="true">
+    <span className={reverse ? 'moving-cell reverse' : 'moving-cell'} style={settled ? to : from} aria-hidden="true">
       <span className={`piece ${piece.side}`}>{pieceLabelView(piece)}</span>
+    </span>
+  );
+}
+
+function CaptureBurst({ point }: { point: { left: string; top: string } }) {
+  return (
+    <span className="capture-burst" style={point} aria-hidden="true">
+      <i />
+      <i />
+      <i />
+      <i />
+      <i />
+      <i />
     </span>
   );
 }

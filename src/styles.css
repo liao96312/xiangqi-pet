@@ -511,8 +511,76 @@ button {
   animation: moving-piece-pop 0.26s ease both;
 }
 
+.moving-cell.reverse .piece {
+  animation-name: moving-piece-reverse-pop;
+}
+
 .cell.move-arriving .piece {
   opacity: 0;
+}
+
+.cell.move-settled .piece {
+  animation: piece-land-bounce 0.28s cubic-bezier(0.15, 0.9, 0.25, 1.1);
+}
+
+.cell.capture-to.move-settled {
+  animation: capture-cell-shake 0.22s ease;
+}
+
+.capture-burst {
+  position: absolute;
+  z-index: 10;
+  width: 13%;
+  aspect-ratio: 1;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.capture-burst i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ffe18a;
+  box-shadow: 0 0 8px rgba(200, 67, 42, 0.72);
+  transform: translate(-50%, -50%);
+  animation: capture-spark 0.42s ease-out both;
+}
+
+.capture-burst i:nth-child(1) {
+  --spark-x: -30px;
+  --spark-y: -18px;
+}
+
+.capture-burst i:nth-child(2) {
+  --spark-x: 24px;
+  --spark-y: -24px;
+  animation-delay: 0.02s;
+}
+
+.capture-burst i:nth-child(3) {
+  --spark-x: 34px;
+  --spark-y: 4px;
+  animation-delay: 0.04s;
+}
+
+.capture-burst i:nth-child(4) {
+  --spark-x: 12px;
+  --spark-y: 28px;
+}
+
+.capture-burst i:nth-child(5) {
+  --spark-x: -24px;
+  --spark-y: 22px;
+  animation-delay: 0.03s;
+}
+
+.capture-burst i:nth-child(6) {
+  --spark-x: -36px;
+  --spark-y: 2px;
+  animation-delay: 0.05s;
 }
 
 .cell.legal::after,
@@ -778,6 +846,63 @@ button {
   }
 }
 
+@keyframes moving-piece-reverse-pop {
+  0% {
+    filter: drop-shadow(0 6px 8px rgba(68, 38, 16, 0.24));
+    transform: scale(1.04);
+  }
+
+  100% {
+    filter: drop-shadow(0 2px 4px rgba(68, 38, 16, 0.16));
+    transform: scale(1);
+  }
+}
+
+@keyframes piece-land-bounce {
+  0% {
+    transform: scale(0.9);
+  }
+
+  58% {
+    transform: scale(1.12);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes capture-cell-shake {
+  0%,
+  100% {
+    transform: translate(-50%, -50%);
+  }
+
+  30% {
+    transform: translate(calc(-50% - 2px), -50%);
+  }
+
+  66% {
+    transform: translate(calc(-50% + 2px), -50%);
+  }
+}
+
+@keyframes capture-spark {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.3);
+  }
+
+  22% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--spark-x)), calc(-50% + var(--spark-y))) scale(1.2);
+  }
+}
+
 @keyframes check-flash-pop {
   0% {
     opacity: 0;
@@ -932,6 +1057,9 @@ button {
 @media (prefers-reduced-motion: reduce) {
   .moving-cell,
   .moving-cell .piece,
+  .cell.move-settled .piece,
+  .cell.capture-to.move-settled,
+  .capture-burst i,
   .board-flash {
     animation: none;
     transition: none;
