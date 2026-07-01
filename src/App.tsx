@@ -26,6 +26,7 @@ export default function App() {
   const [flipped, setFlipped] = useState(readSavedFlipped);
   const [moveAnimationKey, setMoveAnimationKey] = useState('');
   const [checkFlashKey, setCheckFlashKey] = useState('');
+  const [mateFlash, setMateFlash] = useState<{ key: string; text: string } | null>(null);
 
   useEffect(() => {
     window.xiangqiPet?.getAlwaysOnTop().then(setAlwaysOnTop).catch(() => {});
@@ -45,6 +46,7 @@ export default function App() {
   const lastMove = game.state.history.at(-1) ?? null;
   const lastMoveKey = lastMove ? `${game.state.history.length}-${posKey(lastMove.from)}-${posKey(lastMove.to)}` : '';
   const isCheckingSide = !game.state.winner && isInCheck(game.state.board, game.state.turn);
+  const finalMateTactic = useMemo(() => getFinalMateTactic(game.state.history, game.state.winner), [game.state.history, game.state.winner]);
   const captureLine = lastMove?.capture ? `吃掉${lastMove.capture.side === 'red' ? '红' : '黑'}${pieceLabelView(lastMove.capture)}` : '';
   const hintLine = game.hint
     ? moveNotation(game.state.board, game.hint)
@@ -72,6 +74,13 @@ export default function App() {
     const timeout = window.setTimeout(() => setCheckFlashKey(''), 900);
     return () => window.clearTimeout(timeout);
   }, [isCheckingSide, lastMoveKey]);
+
+  useEffect(() => {
+    if (!lastMoveKey || !game.state.winner) return;
+    setMateFlash({ key: lastMoveKey, text: finalMateTactic?.name ?? '绝杀' });
+    const timeout = window.setTimeout(() => setMateFlash(null), 1100);
+    return () => window.clearTimeout(timeout);
+  }, [finalMateTactic?.name, game.state.winner, lastMoveKey]);
 
   async function togglePin() {
     try {
@@ -186,7 +195,8 @@ export default function App() {
       <section className="board-stage">
         <Board board={game.state.board} selected={game.selected} legalTargetKeys={legalTargetKeys} hint={game.hint} checkmateMove={checkmateTactic?.move ?? null} lastMove={lastMove} moveAnimationKey={moveAnimationKey} flipped={flipped} onChoose={game.choose} />
         {checkmateTactic ? <MateBanner key={`${checkmateTactic.name}-${posKey(checkmateTactic.move.from)}-${posKey(checkmateTactic.move.to)}`} tactic={checkmateTactic} board={game.state.board} /> : null}
-        {checkFlashKey ? <CheckFlash key={checkFlashKey} /> : null}
+        {checkFlashKey ? <BoardFlash key={checkFlashKey} text="将" /> : null}
+        {mateFlash ? <BoardFlash key={mateFlash.key} text={mateFlash.text} variant="mate" /> : null}
       </section>
 
       <MoveList history={game.state.history} />
@@ -281,12 +291,29 @@ function MateBanner({ tactic, board }: { tactic: NonNullable<ReturnType<typeof g
   );
 }
 
-function CheckFlash() {
+function BoardFlash({ text, variant = 'check' }: { text: string; variant?: 'check' | 'mate' }) {
   return (
-    <div className="check-flash" aria-live="assertive" role="status">
-      将
+    <div className={`board-flash ${variant}`} aria-live="assertive" role="status">
+      {text}
     </div>
   );
+}
+
+function getFinalMateTactic(history: Move[], winner: 'red' | 'black' | null) {
+  const lastMove = history.at(-1);
+  if (!winner || !lastMove) return null;
+
+  let board = createInitialBoard();
+  for (const move of history.slice(0, -1)) {
+    board = applyMove(board, move);
+  }
+
+  const tactic = getCheckmateTactic(board, winner);
+  return tactic && sameMove(tactic.move, lastMove) ? tactic : null;
+}
+
+function sameMove(a: Move, b: Move) {
+  return a.from.row === b.from.row && a.from.col === b.from.col && a.to.row === b.to.row && a.to.col === b.to.col;
 }
 
 function AnalysisPanel({

@@ -319,7 +319,7 @@ button {
   white-space: nowrap;
 }
 
-.check-flash {
+.board-flash {
   position: absolute;
   inset: 0;
   z-index: 18;
@@ -330,6 +330,7 @@ button {
   font-size: clamp(96px, 25vw, 170px);
   font-weight: 900;
   line-height: 1;
+  white-space: nowrap;
   pointer-events: none;
   text-shadow:
     0 3px 0 rgba(255, 236, 176, 0.86),
@@ -337,6 +338,17 @@ button {
     0 10px 26px rgba(66, 28, 16, 0.3);
   transform-origin: center;
   animation: check-flash-pop 0.82s cubic-bezier(0.18, 0.9, 0.22, 1) both;
+}
+
+.board-flash.mate {
+  color: #a11214;
+  font-size: clamp(64px, 15vw, 112px);
+  letter-spacing: 0.05em;
+  text-shadow:
+    0 3px 0 rgba(255, 237, 177, 0.92),
+    0 0 16px rgba(203, 45, 30, 0.72),
+    0 12px 28px rgba(66, 28, 16, 0.34);
+  animation-duration: 1.02s;
 }
 
 .board-stage,
@@ -920,7 +932,7 @@ button {
 @media (prefers-reduced-motion: reduce) {
   .moving-cell,
   .moving-cell .piece,
-  .check-flash {
+  .board-flash {
     animation: none;
     transition: none;
   }
