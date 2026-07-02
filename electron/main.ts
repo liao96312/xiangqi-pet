@@ -9,6 +9,10 @@ const appRoot = path.join(__dirname, '..');
 const runtimeRoot = app.isPackaged ? process.resourcesPath : appRoot;
 const preloadPath = path.join(appRoot, 'electron', 'preload.cjs');
 const iconPath = app.isPackaged ? path.join(process.resourcesPath, 'icon.ico') : path.join(appRoot, 'build', 'icon.ico');
+
+app.disableHardwareAcceleration();
+app.commandLine.appendSwitch('disable-gpu');
+
 const gotSingleInstanceLock = app.requestSingleInstanceLock();
 
 let mainWindow: BrowserWindow | null = null;

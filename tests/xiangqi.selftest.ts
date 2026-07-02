@@ -77,7 +77,7 @@ function crouchingHorseMate() {
   board[0][5] = { side: 'black', type: 'advisor' };
   board[1][4] = { side: 'black', type: 'pawn' };
   board[4][4] = { side: 'red', type: 'horse' };
-  expectTactic('卧槽马', board);
+  expectTactic('绝杀', board);
 }
 
 function fishingHorseMate() {
@@ -87,7 +87,7 @@ function fishingHorseMate() {
   board[0][4] = { side: 'black', type: 'pawn' };
   board[1][3] = { side: 'black', type: 'pawn' };
   board[3][4] = { side: 'red', type: 'horse' };
-  expectTactic('钓鱼马', board);
+  expectTactic('绝杀', board);
 }
 
 function doubleRookMate() {
@@ -99,7 +99,7 @@ function doubleRookMate() {
   board[1][4] = { side: 'black', type: 'pawn' };
   board[3][4] = { side: 'red', type: 'rook' };
   board[4][4] = { side: 'red', type: 'rook' };
-  expectTactic('双车错', board);
+  expectTactic('铁门栓', board);
 }
 
 function rookHorseMate() {
@@ -110,7 +110,7 @@ function rookHorseMate() {
   board[0][5] = { side: 'black', type: 'pawn' };
   board[2][3] = { side: 'red', type: 'horse' };
   board[3][4] = { side: 'red', type: 'rook' };
-  expectTactic('列马车', board);
+  expectTactic('绝杀', board);
 }
 
 function sideTigerMate() {
@@ -121,7 +121,7 @@ function sideTigerMate() {
   board[2][3] = { side: 'black', type: 'advisor' };
   board[1][2] = { side: 'red', type: 'rook' };
   board[3][2] = { side: 'red', type: 'horse' };
-  expectTactic('侧面虎', board);
+  expectTactic('绝杀', board);
 }
 
 function smotheredPalaceMate() {
@@ -134,7 +134,7 @@ function smotheredPalaceMate() {
   board[1][4] = { side: 'black', type: 'pawn' };
   board[3][3] = { side: 'red', type: 'horse' };
   board[3][4] = { side: 'red', type: 'rook' };
-  expectTactic('闷宫', board);
+  expectTactic('铁门栓', board);
 }
 
 function ironBoltMate() {
@@ -156,7 +156,7 @@ function doubleCannonMate() {
   board[1][4] = { side: 'black', type: 'advisor' };
   board[3][4] = { side: 'red', type: 'cannon' };
   board[4][4] = { side: 'red', type: 'cannon' };
-  expectTactic('重炮', board);
+  expectTactic('天地炮', board);
 }
 
 function rookCannonClampMate() {
@@ -167,7 +167,7 @@ function rookCannonClampMate() {
   board[3][4] = { side: 'red', type: 'cannon' };
   board[5][3] = { side: 'red', type: 'cannon' };
   board[5][4] = { side: 'red', type: 'rook' };
-  expectTactic('夹车炮', board);
+  expectTactic('天地炮', board);
 }
 
 function seaBottomMoonMate() {

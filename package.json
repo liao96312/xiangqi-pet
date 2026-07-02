@@ -1,6 +1,6 @@
 {
   "name": "xiangqi-pet",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "description": "Desktop pet style Xiangqi trainer",
   "type": "module",
