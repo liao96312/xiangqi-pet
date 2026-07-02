@@ -4,7 +4,7 @@
 
 ## 功能
 
-- 桌面悬浮窗口，默认置顶
+- 桌面悬浮窗口，可一键置顶
 - 托盘隐藏、最小化、退出
 - 点击棋子走子，内置基本完整象棋规则
 - 可换边，支持你执红或执黑
@@ -50,3 +50,11 @@ npm install
 ```bash
 npm run build
 ```
+
+## 发布安装包
+
+```bash
+npm run build:installer
+```
+
+`build:installer` 会先检查 `engines/` 下是否存在真正的 `pikafish*.exe`。如果缺少强引擎，会直接失败，避免静默打出弱引擎安装包。

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { getBookSuggestion, getBookSuggestions } from './bookGuide';
 import { boardToFen, uciToMove } from './fen';
 import { moveNotation } from './notation';
@@ -82,6 +82,7 @@ function isDifficultyKey(value: unknown): value is DifficultyKey {
 export function useXiangqiGame() {
   const savedSettings = useMemo(readSavedSettings, []);
   const [state, setState] = useState<GameState>(() => createInitialState());
+  const stateRef = useRef(state);
   const [undoStack, setUndoStack] = useState<GameState[]>([]);
   const [selected, setSelected] = useState<Pos | null>(null);
   const [hint, setHint] = useState<Move | null>(null);
@@ -105,6 +106,10 @@ export function useXiangqiGame() {
     }
     return map;
   }, [legalMoves]);
+
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   useEffect(() => {
     window.xiangqiPet?.engineStatus().then((status) => setEngineAvailable(status.available)).catch(() => setEngineAvailable(false));
@@ -134,11 +139,13 @@ export function useXiangqiGame() {
 
   useEffect(() => {
     if (autoAi && !thinking && !state.winner && state.turn !== playerSide) {
-      window.setTimeout(() => makeAiMove(state), 180);
+      const timer = window.setTimeout(() => makeAiMove(state), 180);
+      return () => window.clearTimeout(timer);
     }
   }, [autoAi, playerSide, state, thinking]);
 
   function commitMove(fromState: GameState, move: Move) {
+    if (stateRef.current !== fromState) return null;
     const next = makeMove(fromState, move);
     if (next === fromState || next.history.length === fromState.history.length) return null;
     setUndoStack((stack) => [...stack, fromState]);
@@ -208,8 +215,10 @@ export function useXiangqiGame() {
 
   function showHint() {
     if (state.winner || thinking) return;
+    const hintState = state;
     setThinking(true);
     window.setTimeout(() => {
+      if (stateRef.current !== hintState) return;
       if (bookPractice && bookSuggestion) {
         setHint(bookSuggestion.move);
         setThinking(false);
@@ -237,14 +246,16 @@ export function useXiangqiGame() {
   }
 
   function makeAiMove(inputState = state) {
-    if (inputState.winner) return;
+    if (inputState.winner || stateRef.current !== inputState) return;
+    const isCurrent = () => stateRef.current === inputState;
     const profile = difficulties.find((item) => item.key === difficulty) ?? difficulties[2];
     setThinking(true);
     window.setTimeout(async () => {
+      if (!isCurrent()) return;
       const bookMove = bookPractice ? getBookSuggestion(inputState)?.move : null;
       if (bookMove) {
         const next = commitMove(inputState, bookMove);
-        if (!next) setState((current) => ({ ...current, message: '谱招应招失败，请悔棋后重试' }));
+        if (!next && isCurrent()) setState((current) => ({ ...current, message: '谱招应招失败，请悔棋后重试' }));
         setHint(null);
         setThinking(false);
         return;
@@ -260,6 +271,7 @@ export function useXiangqiGame() {
       if (profile.useEngine && window.xiangqiPet?.playAnalyze) {
         try {
           const result = await window.xiangqiPet.playAnalyze({ fen: boardToFen(inputState.board, inputState.turn), movetime: profile.engineTime });
+          if (!isCurrent()) return;
           const rawEngineMove = result.ok && result.bestMove ? uciToMove(result.bestMove, inputState.board) : null;
           const engineMove = rawEngineMove ? findMatchingLegalMove(inputState, rawEngineMove) : null;
           if (engineMove) {
@@ -269,10 +281,12 @@ export function useXiangqiGame() {
             return;
           }
         } catch {
+          if (!isCurrent()) return;
           // Fall back to the embedded trainer below.
         }
       }
 
+      if (!isCurrent()) return;
       const best = chooseAiMove(inputState.board, inputState.turn, profile.depth, profile.blunderRate);
       if (best) commitMove(inputState, best);
       setHint(null);

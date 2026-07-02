@@ -1,6 +1,6 @@
 {
   "name": "xiangqi-pet",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Desktop pet style Xiangqi trainer",
   "type": "module",
@@ -8,19 +8,20 @@
   "scripts": {
     "start": "node scripts/start.cjs",
     "dev": "concurrently -k \"vite --host 127.0.0.1 --port 5188\" \"wait-on tcp:5188 && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5188 node scripts/start.cjs\"",
+    "generate:icon": "node scripts/generate-icon.cjs",
+    "check:engine": "node scripts/check-engine.cjs",
     "build": "tsc -p tsconfig.json && vite build && tsc -p tsconfig.electron.json",
     "selftest": "tsc -p tsconfig.selftest.json && node scripts/mark-selftest-commonjs.cjs && node .selftest/tests/xiangqi.selftest.js",
-    "build:installer": "npm run selftest && npm run build && electron-builder --win nsis --x64",
+    "build:installer": "npm run generate:icon && npm run check:engine && npm run selftest && npm run build && electron-builder --win nsis --x64",
     "preview": "npm run build && node scripts/start.cjs"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "^4.7.0",
     "lucide-react": "^0.468.0",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "vite": "^6.4.3"
+    "react-dom": "^19.1.0"
   },
   "devDependencies": {
+    "@vitejs/plugin-react": "^4.7.0",
     "@types/node": "^22.10.2",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
@@ -31,6 +32,7 @@
     "electron": "^31.7.7",
     "innoextract-bin": "^0.2.0",
     "typescript": "^6.0.3",
+    "vite": "^6.4.3",
     "wait-on": "^8.0.3"
   },
   "build": {
@@ -52,9 +54,14 @@
         "filter": [
           "**/*"
         ]
+      },
+      {
+        "from": "build/icon.ico",
+        "to": "icon.ico"
       }
     ],
     "win": {
+      "icon": "build/icon.ico",
       "target": "nsis"
     },
     "nsis": {
