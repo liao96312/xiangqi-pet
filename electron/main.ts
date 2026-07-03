@@ -12,6 +12,7 @@ const iconPath = app.isPackaged ? path.join(process.resourcesPath, 'icon.ico') :
 
 app.disableHardwareAcceleration();
 app.commandLine.appendSwitch('disable-gpu');
+app.commandLine.appendSwitch('disable-gpu-sandbox');
 
 const gotSingleInstanceLock = app.requestSingleInstanceLock();
 
