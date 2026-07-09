@@ -1,60 +1,84 @@
-# 象棋桌宠
+# Xiangqi Pet
 
-一个独立的 Electron + React 象棋陪练小窗。
+**Language:** English | [简体中文](README.zh-CN.md)
 
-## 功能
+![Electron](https://img.shields.io/badge/Electron-Desktop-47848F?logo=electron&logoColor=white)
+![React](https://img.shields.io/badge/React%20%2B%20Vite-19-61DAFB?logo=react&logoColor=111)
+![TypeScript](https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white)
 
-- 桌面悬浮窗口，可一键置顶
-- 托盘隐藏、最小化、退出
-- 点击棋子走子，内置基本完整象棋规则
-- 可换边，支持你执红或执黑
-- 灯泡按钮给当前局面推荐走法，使用象棋术语显示
-- 谱招练习，内置多条常见开局谱线
-- 局内评分、复盘、一步绝杀提示
-- 无保护且会被吃的棋子会高亮提醒
-- 如果 `engines/` 目录里放入 Pikafish 可执行文件，会自动使用强引擎分析、评分和提示
-- 可收起成迷你桌宠形态
+Xiangqi Pet is a desktop-pet-style Chinese chess trainer built with Electron, React, and TypeScript. It stays as a small floating window, lets you play and review positions, highlights tactical risks, and can use a local Pikafish engine when available.
 
-## 强引擎
+## Features
 
-从 Pikafish 官方 release 或官网“纯引擎文件”下载 Windows 引擎包，解压后把任意 `pikafish*.exe` 放到：
+- Floating desktop window with one-click pin-to-top.
+- Tray hide, minimize, and quit.
+- Click-to-move board with built-in Xiangqi rule validation.
+- Red-side or black-side play.
+- Hint button that suggests candidate moves in Xiangqi notation.
+- Opening practice with built-in common lines.
+- Position evaluation, review, and mate-in-one hints.
+- Highlights unprotected pieces that can be captured.
+- Optional Pikafish engine support from the local `engines/` directory.
+- Compact mode for a more desktop-pet-like shape.
+
+## Optional Pikafish Engine
+
+Download a Windows Pikafish engine package from the official release or website, unzip it, and place any `pikafish*.exe` file under:
 
 ```text
 engines/
 ```
 
-应用启动后会递归查找 `engines/` 下的 `pikafish*.exe`。找到后：
+After startup, the app recursively searches `engines/` for `pikafish*.exe`. When found:
 
-- 局内评分条使用 Pikafish 分析
-- AI 提示优先使用 Pikafish 的最佳走法
-- 自动陪练优先使用 Pikafish 走子
+- Position evaluation uses Pikafish.
+- AI hints prefer Pikafish best moves.
+- Auto training prefers Pikafish moves.
 
-Pikafish 是 GPL-3.0 项目，NNUE 权重也有使用限制；如果后续要发布或商用，需要单独确认授权。
+Pikafish is a GPL-3.0 project. NNUE weights may also have usage restrictions. Confirm licensing separately before redistribution or commercial use.
 
-## 开发
+## Development
 
 ```bash
 npm install
 npm run dev
 ```
 
-如果 Electron 下载失败，可以使用镜像：
+If Electron download fails, use a mirror:
 
 ```powershell
 $env:ELECTRON_MIRROR='https://npmmirror.com/mirrors/electron/'
 npm install
 ```
 
-## 构建检查
+## Verification
 
 ```bash
+npm run selftest
 npm run build
 ```
 
-## 发布安装包
+`selftest` validates Xiangqi rules and move logic. `build` compiles the React app, Vite assets, and Electron main process.
+
+## Build Installer
 
 ```bash
 npm run build:installer
 ```
 
-`build:installer` 会先检查 `engines/` 下是否存在真正的 `pikafish*.exe`。如果缺少强引擎，会直接失败，避免静默打出弱引擎安装包。
+`build:installer` first checks whether a real `pikafish*.exe` exists under `engines/`. If the engine is missing, the build fails early to avoid accidentally shipping a weak-engine installer.
+
+## Repository Layout
+
+```text
+src/        React UI and Xiangqi game logic
+electron/   Electron main process, preload, and Pikafish adapter
+engines/    Optional local Pikafish engine directory
+tests/      Xiangqi rule self-tests
+scripts/    Startup, icon generation, engine check, selftest helpers
+build/      App icon assets
+```
+
+## Status
+
+This is a local desktop trainer. It avoids network dependencies; stronger analysis is enabled by dropping a local Pikafish executable into `engines/`.
