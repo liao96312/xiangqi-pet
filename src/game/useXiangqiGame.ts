@@ -20,6 +20,7 @@ export interface AnalysisResult {
   ok: boolean;
   engine: 'pikafish' | 'none';
   bestMove?: string;
+  candidates?: string[];
   scoreCp?: number;
   mate?: number;
   pv?: string[];
@@ -283,8 +284,7 @@ export function useXiangqiGame() {
             movetime: profile.engineTime
           });
           if (!isCurrent()) return;
-          const rawEngineMove = result.ok && result.bestMove ? uciToMove(result.bestMove, inputState.board) : null;
-          const engineMove = rawEngineMove ? findMatchingLegalMove(inputState, rawEngineMove) : null;
+          const engineMove = result.ok ? pickEngineMove(inputState, result, previousPositionKeys(inputState)) : null;
           if (engineMove) {
             commitMove(inputState, engineMove);
             setHint(null);
@@ -354,6 +354,49 @@ function chooseAiMove(board: GameState['board'], side: GameState['turn'], depth:
 
 function findMatchingLegalMove(state: GameState, move: Move) {
   return getLegalMoves(state.board, state.turn).find((legal) => sameMove(legal, move));
+}
+
+function pickEngineMove(state: GameState, result: AnalysisResult, previousKeys: Set<string>) {
+  const candidates = uniqueMoves([result.bestMove, ...(result.candidates ?? [])]);
+  const legalCandidates = candidates
+    .map((text) => uciToMove(text, state.board))
+    .map((move) => (move ? findMatchingLegalMove(state, move) : null))
+    .filter((move): move is Move => !!move);
+
+  const nonRepeating = legalCandidates.find((move) => !wouldRepeatPosition(state, move, previousKeys));
+  return nonRepeating ?? legalCandidates[0] ?? null;
+}
+
+function uniqueMoves(moves: Array<string | undefined>) {
+  const seen = new Set<string>();
+  return moves.filter((move): move is string => {
+    if (!move || seen.has(move)) return false;
+    seen.add(move);
+    return true;
+  });
+}
+
+function previousPositionKeys(state: GameState) {
+  const keys = new Set<string>();
+  let replay = createInitialState();
+  keys.add(positionKey(replay));
+
+  for (const move of state.history) {
+    replay = makeMove(replay, move);
+    keys.add(positionKey(replay));
+  }
+  keys.add(positionKey(state));
+  return keys;
+}
+
+function wouldRepeatPosition(state: GameState, move: Move, previousKeys: Set<string>) {
+  const next = makeMove(state, move);
+  if (next === state || next.history.length === state.history.length) return false;
+  return previousKeys.has(positionKey(next));
+}
+
+function positionKey(state: GameState) {
+  return boardToFen(state.board, state.turn).split(' ').slice(0, 2).join(' ');
 }
 
 function sameSquare(a: Pos, b: Pos) {

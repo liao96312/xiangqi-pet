@@ -12,6 +12,7 @@ interface Window {
       ok: boolean;
       engine: 'pikafish' | 'none';
       bestMove?: string;
+      candidates?: string[];
       scoreCp?: number;
       mate?: number;
       pv?: string[];
@@ -22,6 +23,7 @@ interface Window {
       ok: boolean;
       engine: 'pikafish' | 'none';
       bestMove?: string;
+      candidates?: string[];
       scoreCp?: number;
       mate?: number;
       pv?: string[];
