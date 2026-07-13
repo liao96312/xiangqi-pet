@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { EyeOff, Lightbulb, Minus, Pin, PinOff, Power, RefreshCcw, ScanSearch, Sparkles, Undo2 } from 'lucide-react';
 import { useXiangqiGame } from './game/useXiangqiGame';
 import { applyMove, createInitialBoard, getCheckmateTactic, isInCheck, isPieceHanging, isPieceProtected, posKey, type Move } from './game/xiangqi';
-import { boardToFen, uciToMove } from './game/fen';
+import { boardToFen, moveToUci, uciToMove } from './game/fen';
 import { moveNotation } from './game/notation';
 import type { Pos } from './game/xiangqi';
 
@@ -12,6 +12,13 @@ type MoveAnimation = {
   key: string;
   move: Move;
   reverse?: boolean;
+};
+
+type BoardPoint = {
+  left: string;
+  top: string;
+  leftRatio: number;
+  topRatio: number;
 };
 
 function readSavedFlipped() {
@@ -31,8 +38,6 @@ export default function App() {
   const [review, setReview] = useState('');
   const [flipped, setFlipped] = useState(readSavedFlipped);
   const [moveAnimation, setMoveAnimation] = useState<MoveAnimation | null>(null);
-  const [settleAnimation, setSettleAnimation] = useState<{ key: string; pos: Pos } | null>(null);
-  const [captureBurst, setCaptureBurst] = useState<{ key: string; pos: Pos } | null>(null);
   const [checkFlashKey, setCheckFlashKey] = useState('');
   const [mateFlash, setMateFlash] = useState<{ key: string; text: string } | null>(null);
   const previousHistoryRef = useRef<Move[]>(game.state.history);
@@ -80,20 +85,14 @@ export default function App() {
       if (move) {
         const key = `${current.length}-${posKey(move.from)}-${posKey(move.to)}`;
         setMoveAnimation({ key, move });
-        if (move.capture) setCaptureBurst({ key, pos: move.to });
-        timers.push(window.setTimeout(() => setMoveAnimation(null), 260));
-        timers.push(window.setTimeout(() => setSettleAnimation({ key, pos: move.to }), 235));
-        timers.push(window.setTimeout(() => setSettleAnimation(null), 520));
-        timers.push(window.setTimeout(() => setCaptureBurst(null), 520));
+        timers.push(window.setTimeout(() => setMoveAnimation(null), 220));
       }
     } else if (current.length < previous.length && previous.length - current.length <= 2) {
       const move = previous.at(-1);
       if (move) {
         const key = `undo-${previous.length}-${posKey(move.to)}-${posKey(move.from)}`;
         setMoveAnimation({ key, move, reverse: true });
-        timers.push(window.setTimeout(() => setMoveAnimation(null), 260));
-        timers.push(window.setTimeout(() => setSettleAnimation({ key, pos: move.from }), 235));
-        timers.push(window.setTimeout(() => setSettleAnimation(null), 520));
+        timers.push(window.setTimeout(() => setMoveAnimation(null), 220));
       }
     }
 
@@ -150,9 +149,17 @@ export default function App() {
         const move = game.state.history[index];
         const turn = index % 2 === 0 ? 'red' : 'black';
         const beforeBoard = board;
-        const before = await window.xiangqiPet.playAnalyze({ fen: boardToFen(beforeBoard, turn), movetime: 700 });
+        const before = await window.xiangqiPet.playAnalyze({
+          fen: boardToFen(beforeBoard, turn),
+          moves: game.state.history.slice(0, index).map(moveToUci),
+          movetime: 700
+        });
         board = applyMove(board, move);
-        const after = await window.xiangqiPet.playAnalyze({ fen: boardToFen(board, turn === 'red' ? 'black' : 'red'), movetime: 700 });
+        const after = await window.xiangqiPet.playAnalyze({
+          fen: boardToFen(board, turn === 'red' ? 'black' : 'red'),
+          moves: game.state.history.slice(0, index + 1).map(moveToUci),
+          movetime: 700
+        });
         if (!before.ok || !after.ok || before.scoreCp == null || after.scoreCp == null) continue;
         const beforeRed = turn === 'red' ? before.scoreCp : -before.scoreCp;
         const afterRed = turn === 'red' ? -after.scoreCp : after.scoreCp;
@@ -226,7 +233,7 @@ export default function App() {
       {review ? <section className="review-panel">{review}</section> : null}
 
       <section className="board-stage">
-        <Board board={game.state.board} selected={game.selected} legalTargetKeys={legalTargetKeys} hint={game.hint} checkmateMove={checkmateTactic?.move ?? null} lastMove={lastMove} moveAnimation={moveAnimation} settleAnimation={settleAnimation} captureBurst={captureBurst} flipped={flipped} onChoose={game.choose} />
+        <Board board={game.state.board} selected={game.selected} legalTargetKeys={legalTargetKeys} hint={game.hint} checkmateMove={checkmateTactic?.move ?? null} lastMove={lastMove} moveAnimation={moveAnimation} flipped={flipped} onChoose={game.choose} />
         {checkmateTactic ? <MateBanner key={`${checkmateTactic.name}-${posKey(checkmateTactic.move.from)}-${posKey(checkmateTactic.move.to)}`} tactic={checkmateTactic} board={game.state.board} /> : null}
         {checkFlashKey ? <BoardFlash key={checkFlashKey} text="将" /> : null}
         {mateFlash ? <BoardFlash key={mateFlash.key} text={mateFlash.text} variant="mate" /> : null}
@@ -430,8 +437,6 @@ function Board({
   checkmateMove,
   lastMove,
   moveAnimation,
-  settleAnimation,
-  captureBurst,
   flipped,
   onChoose
 }: {
@@ -442,8 +447,6 @@ function Board({
   checkmateMove: Move | null;
   lastMove: ReturnType<typeof useXiangqiGame>['state']['history'][number] | null;
   moveAnimation: MoveAnimation | null;
-  settleAnimation: { key: string; pos: Pos } | null;
-  captureBurst: { key: string; pos: Pos } | null;
   flipped: boolean;
   onChoose: (pos: Pos) => void;
 }) {
@@ -460,9 +463,22 @@ function Board({
   const displayPos = (pos: Pos) => (flipped ? { row: 9 - pos.row, col: 8 - pos.col } : pos);
   const point = (pos: Pos) => {
     const display = displayPos(pos);
+    const leftRatio = 5.5556 + display.col * 11.1111;
+    const topRatio = 9 + display.row * 9;
     return {
-      left: `${5.5556 + display.col * 11.1111}%`,
-      top: `${9 + display.row * 9}%`
+      left: `${leftRatio}%`,
+      top: `${topRatio}%`
+    };
+  };
+  const movePoint = (pos: Pos): BoardPoint => {
+    const display = displayPos(pos);
+    const leftRatio = 5.5556 + display.col * 11.1111;
+    const topRatio = 9 + display.row * 9;
+    return {
+      left: `${leftRatio}%`,
+      top: `${topRatio}%`,
+      leftRatio,
+      topRatio
     };
   };
   const movingPiece = moveAnimation
@@ -471,19 +487,17 @@ function Board({
       : board[moveAnimation.move.to.row][moveAnimation.move.to.col]
     : null;
   const movingArrivalKey = moveAnimation ? posKey(moveAnimation.reverse ? moveAnimation.move.from : moveAnimation.move.to) : '';
-  const settleKey = settleAnimation ? posKey(settleAnimation.pos) : '';
 
   return (
     <section className="board-wrap" aria-label="中国象棋棋盘">
       <div className="xiangqi-board">
         <BoardLines flipped={flipped} />
-        {captureBurst ? <CaptureBurst key={captureBurst.key} point={point(captureBurst.pos)} /> : null}
         {movingPiece && moveAnimation ? (
           <MovingPiece
             key={moveAnimation.key}
             piece={movingPiece}
-            from={point(moveAnimation.reverse ? moveAnimation.move.to : moveAnimation.move.from)}
-            to={point(moveAnimation.reverse ? moveAnimation.move.from : moveAnimation.move.to)}
+            from={movePoint(moveAnimation.reverse ? moveAnimation.move.to : moveAnimation.move.from)}
+            to={movePoint(moveAnimation.reverse ? moveAnimation.move.from : moveAnimation.move.to)}
             reverse={moveAnimation.reverse}
           />
         ) : null}
@@ -501,7 +515,6 @@ function Board({
               lastTo === key ? 'last-to' : '',
               lastTo === key && lastWasCapture ? 'capture-to' : '',
               movingArrivalKey === key ? 'move-arriving' : '',
-              settleKey === key ? 'move-settled' : '',
               hintFrom === key ? 'hint-from' : '',
               hintTo === key ? 'hint-to' : '',
               mateFrom === key ? 'mate-from' : '',
@@ -528,33 +541,37 @@ function MovingPiece({
   reverse
 }: {
   piece: NonNullable<ReturnType<typeof useXiangqiGame>['state']['board'][number][number]>;
-  from: { left: string; top: string };
-  to: { left: string; top: string };
+  from: BoardPoint;
+  to: BoardPoint;
   reverse?: boolean;
 }) {
-  const [settled, setSettled] = useState(false);
+  const [delta, setDelta] = useState({ x: 0, y: 0, settled: false });
 
   useEffect(() => {
-    const frame = window.requestAnimationFrame(() => setSettled(true));
-    return () => window.cancelAnimationFrame(frame);
-  }, []);
+    let secondFrame = 0;
+    const firstFrame = window.requestAnimationFrame(() => {
+      const board = document.querySelector('.xiangqi-board');
+      const rect = board?.getBoundingClientRect();
+      const x = rect ? ((to.leftRatio - from.leftRatio) / 100) * rect.width : 0;
+      const y = rect ? ((to.topRatio - from.topRatio) / 100) * rect.height : 0;
+      secondFrame = window.requestAnimationFrame(() => setDelta({ x, y, settled: true }));
+    });
+    return () => {
+      window.cancelAnimationFrame(firstFrame);
+      window.cancelAnimationFrame(secondFrame);
+    };
+  }, [from.leftRatio, from.topRatio, to.leftRatio, to.topRatio]);
+
+  const style = {
+    left: from.left,
+    top: from.top,
+    '--move-x': `${delta.x}px`,
+    '--move-y': `${delta.y}px`
+  } as CSSProperties;
 
   return (
-    <span className={reverse ? 'moving-cell reverse' : 'moving-cell'} style={settled ? to : from} aria-hidden="true">
+    <span className={reverse ? 'moving-cell reverse' : 'moving-cell'} data-settled={delta.settled} style={style} aria-hidden="true">
       <span className={`piece ${piece.side}`}>{pieceLabelView(piece)}</span>
-    </span>
-  );
-}
-
-function CaptureBurst({ point }: { point: { left: string; top: string } }) {
-  return (
-    <span className="capture-burst" style={point} aria-hidden="true">
-      <i />
-      <i />
-      <i />
-      <i />
-      <i />
-      <i />
     </span>
   );
 }

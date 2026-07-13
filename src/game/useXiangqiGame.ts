@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { getBookSuggestion, getBookSuggestions } from './bookGuide';
-import { boardToFen, uciToMove } from './fen';
+import { boardToFen, moveToUci, uciToMove } from './fen';
 import { moveNotation } from './notation';
 import {
   applyMove,
@@ -40,7 +40,7 @@ export const difficulties: Array<{
   { key: 'rookie', label: '入门', depth: 1, blunderRate: 0.8, delay: 120, engineTime: 0, useEngine: false },
   { key: 'normal', label: '普通', depth: 1, blunderRate: 0.35, delay: 180, engineTime: 0, useEngine: false },
   { key: 'advanced', label: '进阶', depth: 2, blunderRate: 0.08, delay: 240, engineTime: 900, useEngine: true },
-  { key: 'strong', label: '强一些', depth: 3, blunderRate: 0, delay: 320, engineTime: 2200, useEngine: true }
+  { key: 'strong', label: '又快又强', depth: 3, blunderRate: 0, delay: 80, engineTime: 1000, useEngine: true }
 ];
 
 const SAVED_SETTINGS_KEY = 'xiangqi-pet-settings';
@@ -121,21 +121,28 @@ export function useXiangqiGame() {
 
   useEffect(() => {
     let cancelled = false;
-    if (!window.xiangqiPet?.analyze) return;
-    window.xiangqiPet
-      .analyze({ fen: boardToFen(state.board, state.turn), movetime: 450 })
-      .then((result) => {
-        if (cancelled || (!result.ok && result.error === 'Engine is busy')) return;
-        setAnalysis(result);
-        setEngineAvailable(result.ok && result.engine === 'pikafish');
-      })
-      .catch(() => {
-        if (!cancelled) setAnalysis(null);
-      });
+    if (!window.xiangqiPet?.analyze || (autoAi && !state.winner && state.turn !== playerSide)) return;
+    const timer = window.setTimeout(() => {
+      window.xiangqiPet
+        ?.analyze({
+          fen: boardToFen(state.board, state.turn),
+          moves: state.history.map(moveToUci),
+          movetime: 450
+        })
+        .then((result) => {
+          if (cancelled || (!result.ok && result.error === 'Engine is busy')) return;
+          setAnalysis(result);
+          setEngineAvailable(result.ok && result.engine === 'pikafish');
+        })
+        .catch(() => {
+          if (!cancelled) setAnalysis(null);
+        });
+    }, 320);
     return () => {
       cancelled = true;
+      window.clearTimeout(timer);
     };
-  }, [state.board, state.turn]);
+  }, [autoAi, playerSide, state.board, state.history, state.turn, state.winner]);
 
   useEffect(() => {
     if (autoAi && !thinking && !state.winner && state.turn !== playerSide) {
@@ -270,7 +277,11 @@ export function useXiangqiGame() {
 
       if (profile.useEngine && window.xiangqiPet?.playAnalyze) {
         try {
-          const result = await window.xiangqiPet.playAnalyze({ fen: boardToFen(inputState.board, inputState.turn), movetime: profile.engineTime });
+          const result = await window.xiangqiPet.playAnalyze({
+            fen: boardToFen(inputState.board, inputState.turn),
+            moves: inputState.history.map(moveToUci),
+            movetime: profile.engineTime
+          });
           if (!isCurrent()) return;
           const rawEngineMove = result.ok && result.bestMove ? uciToMove(result.bestMove, inputState.board) : null;
           const engineMove = rawEngineMove ? findMatchingLegalMove(inputState, rawEngineMove) : null;

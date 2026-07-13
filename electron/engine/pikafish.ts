@@ -15,6 +15,7 @@ export interface EngineAnalysis {
 
 export interface AnalyzeInput {
   fen: string;
+  moves?: string[];
   movetime?: number;
 }
 
@@ -43,7 +44,7 @@ export class PikafishBridge {
     this.busy = true;
     try {
       await this.ensureStarted();
-      const result = await this.runSearch(input.fen, input.movetime ?? 550);
+      const result = await this.runSearch(input.fen, input.moves, input.movetime ?? 550);
       return { ok: true, engine: 'pikafish', ...result };
     } catch (error) {
       this.stop();
@@ -74,13 +75,13 @@ export class PikafishBridge {
       this.process = null;
     });
     await this.commandUntil('uci', (line) => line === 'uciok', 8000);
-    this.process.stdin.write('setoption name Threads value 2\n');
-    this.process.stdin.write('setoption name Hash value 128\n');
+    this.process.stdin.write('setoption name Threads value 8\n');
+    this.process.stdin.write('setoption name Hash value 512\n');
     await this.commandUntil('isready', (line) => line === 'readyok', 8000);
     this.ready = true;
   }
 
-  private runSearch(fen: string, movetime: number) {
+  private runSearch(fen: string, moves: string[] | undefined, movetime: number) {
     return new Promise<Omit<EngineAnalysis, 'ok' | 'engine'>>((resolve, reject) => {
       const proc = this.process;
       if (!proc) {
@@ -128,7 +129,7 @@ export class PikafishBridge {
       };
 
       proc.stdout.on('data', onData);
-      proc.stdin.write(`position fen ${fen}\n`);
+      proc.stdin.write(`${positionCommand(fen, moves)}\n`);
       proc.stdin.write(`go movetime ${movetime}\n`);
     });
   }
@@ -161,6 +162,13 @@ export class PikafishBridge {
       proc.stdin.write(`${command}\n`);
     });
   }
+}
+
+function positionCommand(fen: string, moves: string[] | undefined) {
+  if (moves && moves.every((move) => /^[a-i][0-9][a-i][0-9]$/.test(move))) {
+    return `position startpos${moves.length > 0 ? ` moves ${moves.join(' ')}` : ''}`;
+  }
+  return `position fen ${fen}`;
 }
 
 function findPikafishExecutable(appRoot: string) {

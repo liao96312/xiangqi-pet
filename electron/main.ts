@@ -10,17 +10,13 @@ const runtimeRoot = app.isPackaged ? process.resourcesPath : appRoot;
 const preloadPath = path.join(appRoot, 'electron', 'preload.cjs');
 const iconPath = app.isPackaged ? path.join(process.resourcesPath, 'icon.ico') : path.join(appRoot, 'build', 'icon.ico');
 
-app.disableHardwareAcceleration();
-app.commandLine.appendSwitch('disable-gpu');
-
 const gotSingleInstanceLock = app.requestSingleInstanceLock();
 
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let alwaysOnTop = false;
 let isQuitting = false;
-const analysisEngine = new PikafishBridge(runtimeRoot);
-const playEngine = new PikafishBridge(runtimeRoot);
+const engine = new PikafishBridge(runtimeRoot);
 
 process.on('uncaughtException', (error) => {
   logCrash('uncaughtException', error);
@@ -202,9 +198,9 @@ if (gotSingleInstanceLock) app.whenReady().then(() => {
     return alwaysOnTop;
   });
   ipcMain.handle('window:get-always-on-top', () => alwaysOnTop);
-  ipcMain.handle('engine:status', () => ({ available: analysisEngine.isAvailable() || playEngine.isAvailable() }));
-  ipcMain.handle('engine:analyze', (_event, input: { fen: string; movetime?: number }) => analysisEngine.analyze(input));
-  ipcMain.handle('engine:play-analyze', (_event, input: { fen: string; movetime?: number }) => playEngine.analyze(input));
+  ipcMain.handle('engine:status', () => ({ available: engine.isAvailable() }));
+  ipcMain.handle('engine:analyze', (_event, input: { fen: string; moves?: string[]; movetime?: number }) => engine.analyze(input));
+  ipcMain.handle('engine:play-analyze', (_event, input: { fen: string; moves?: string[]; movetime?: number }) => engine.analyze(input));
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -218,8 +214,7 @@ app.on('window-all-closed', () => {
 app.on('before-quit', () => {
   isQuitting = true;
   saveWindowState();
-  analysisEngine.stop();
-  playEngine.stop();
+  engine.stop();
 });
 
 function logCrash(type: string, detail: unknown) {
