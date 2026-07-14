@@ -6,6 +6,7 @@ export interface EngineAnalysis {
   ok: boolean;
   engine: 'pikafish' | 'none';
   bestMove?: string;
+  candidates?: string[];
   scoreCp?: number;
   mate?: number;
   pv?: string[];
@@ -15,6 +16,7 @@ export interface EngineAnalysis {
 
 export interface AnalyzeInput {
   fen: string;
+  moves?: string[];
   movetime?: number;
 }
 
@@ -43,7 +45,7 @@ export class PikafishBridge {
     this.busy = true;
     try {
       await this.ensureStarted();
-      const result = await this.runSearch(input.fen, input.movetime ?? 550);
+      const result = await this.runSearch(input.fen, input.moves, input.movetime ?? 550);
       return { ok: true, engine: 'pikafish', ...result };
     } catch (error) {
       this.stop();
@@ -74,13 +76,14 @@ export class PikafishBridge {
       this.process = null;
     });
     await this.commandUntil('uci', (line) => line === 'uciok', 8000);
-    this.process.stdin.write('setoption name Threads value 2\n');
-    this.process.stdin.write('setoption name Hash value 128\n');
+    this.process.stdin.write('setoption name Threads value 8\n');
+    this.process.stdin.write('setoption name Hash value 512\n');
+    this.process.stdin.write('setoption name MultiPV value 5\n');
     await this.commandUntil('isready', (line) => line === 'readyok', 8000);
     this.ready = true;
   }
 
-  private runSearch(fen: string, movetime: number) {
+  private runSearch(fen: string, moves: string[] | undefined, movetime: number) {
     return new Promise<Omit<EngineAnalysis, 'ok' | 'engine'>>((resolve, reject) => {
       const proc = this.process;
       if (!proc) {
@@ -92,6 +95,7 @@ export class PikafishBridge {
       let mate: number | undefined;
       let pv: string[] | undefined;
       let depth: number | undefined;
+      const candidateMoves = new Map<number, string>();
       const timeout = windowlessTimeout(() => {
         cleanup();
         reject(new Error('Pikafish search timeout'));
@@ -104,15 +108,23 @@ export class PikafishBridge {
         for (const line of lines) {
           const info = parseInfo(line);
           if (info) {
-            scoreCp = info.scoreCp ?? scoreCp;
-            mate = info.mate ?? mate;
-            pv = info.pv ?? pv;
-            depth = info.depth ?? depth;
+            if (info.pv?.[0]) candidateMoves.set(info.multipv ?? 1, info.pv[0]);
+            if (!info.multipv || info.multipv === 1) {
+              scoreCp = info.scoreCp ?? scoreCp;
+              mate = info.mate ?? mate;
+              pv = info.pv ?? pv;
+              depth = info.depth ?? depth;
+            }
           }
           if (line.startsWith('bestmove ')) {
             cleanup();
+            const bestMove = line.split(/\s+/)[1];
+            if (bestMove) candidateMoves.set(1, bestMove);
             resolve({
-              bestMove: line.split(/\s+/)[1],
+              bestMove,
+              candidates: [...candidateMoves.entries()]
+                .sort((a, b) => a[0] - b[0])
+                .map((entry) => entry[1]),
               scoreCp,
               mate,
               pv,
@@ -128,7 +140,7 @@ export class PikafishBridge {
       };
 
       proc.stdout.on('data', onData);
-      proc.stdin.write(`position fen ${fen}\n`);
+      proc.stdin.write(`${positionCommand(fen, moves)}\n`);
       proc.stdin.write(`go movetime ${movetime}\n`);
     });
   }
@@ -161,6 +173,13 @@ export class PikafishBridge {
       proc.stdin.write(`${command}\n`);
     });
   }
+}
+
+function positionCommand(fen: string, moves: string[] | undefined) {
+  if (moves && moves.every((move) => /^[a-i][0-9][a-i][0-9]$/.test(move))) {
+    return `position startpos${moves.length > 0 ? ` moves ${moves.join(' ')}` : ''}`;
+  }
+  return `position fen ${fen}`;
 }
 
 function findPikafishExecutable(appRoot: string) {
@@ -200,11 +219,13 @@ function parseInfo(line: string) {
   const cpMatch = line.match(/\bscore\s+cp\s+(-?\d+)/);
   const mateMatch = line.match(/\bscore\s+mate\s+(-?\d+)/);
   const pvMatch = line.match(/\bpv\s+(.+)$/);
+  const multipvMatch = line.match(/\bmultipv\s+(\d+)/);
   return {
     depth: depthMatch ? Number(depthMatch[1]) : undefined,
     scoreCp: cpMatch ? Number(cpMatch[1]) : undefined,
     mate: mateMatch ? Number(mateMatch[1]) : undefined,
-    pv: pvMatch ? pvMatch[1].trim().split(/\s+/) : undefined
+    pv: pvMatch ? pvMatch[1].trim().split(/\s+/) : undefined,
+    multipv: multipvMatch ? Number(multipvMatch[1]) : undefined
   };
 }
 

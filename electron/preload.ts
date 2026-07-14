@@ -7,22 +7,24 @@ contextBridge.exposeInMainWorld('xiangqiPet', {
   toggleAlwaysOnTop: () => ipcRenderer.invoke('window:toggle-always-on-top') as Promise<boolean>,
   getAlwaysOnTop: () => ipcRenderer.invoke('window:get-always-on-top') as Promise<boolean>,
   engineStatus: () => ipcRenderer.invoke('engine:status') as Promise<{ available: boolean }>,
-  analyze: (input: { fen: string; movetime?: number }) =>
+  analyze: (input: { fen: string; moves?: string[]; movetime?: number }) =>
     ipcRenderer.invoke('engine:analyze', input) as Promise<{
       ok: boolean;
       engine: 'pikafish' | 'none';
       bestMove?: string;
+      candidates?: string[];
       scoreCp?: number;
       mate?: number;
       pv?: string[];
       depth?: number;
       error?: string;
     }>,
-  playAnalyze: (input: { fen: string; movetime?: number }) =>
+  playAnalyze: (input: { fen: string; moves?: string[]; movetime?: number }) =>
     ipcRenderer.invoke('engine:play-analyze', input) as Promise<{
       ok: boolean;
       engine: 'pikafish' | 'none';
       bestMove?: string;
+      candidates?: string[];
       scoreCp?: number;
       mate?: number;
       pv?: string[];
