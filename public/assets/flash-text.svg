@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" width="400" height="200">
+  <defs>
+    <!-- 金属刀锋滤镜：多层描边 + 发光 + 内阴影 -->
+    <filter id="metalBlade" x="-30%" y="-30%" width="160%" height="160%">
+      <!-- 底层深色阴影（墨黑） -->
+      <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="blurShadow"/>
+      <feOffset dx="0" dy="6" result="offsetShadow"/>
+      <feFlood flood-color="#0a0502" flood-opacity="0.75"/>
+      <feComposite in2="offsetShadow" operator="in" result="deepShadow"/>
+
+      <!-- 金色描边 -->
+      <feMorphology operator="dilate" radius="4" in="SourceAlpha" result="thickOutline"/>
+      <feFlood flood-color="#c49428" flood-opacity="0.9"/>
+      <feComposite in2="thickOutline" operator="in" result="goldOutline"/>
+      <feGaussianBlur stdDeviation="2" result="blurredGoldOutline"/>
+
+      <!-- 内发光（朱砂） -->
+      <feGaussianBlur in="SourceAlpha" stdDeviation="8" result="innerGlowBlur"/>
+      <feFlood flood-color="#c43a28" flood-opacity="0.6"/>
+      <feComposite in2="innerGlowBlur" operator="in" result="innerGlow"/>
+
+      <!-- 外发光（朱砂） -->
+      <feGaussianBlur in="SourceAlpha" stdDeviation="12" result="outerGlowBlur"/>
+      <feFlood flood-color="#d44a38" flood-opacity="0.5"/>
+      <feComposite in2="outerGlowBlur" operator="in" result="outerGlow"/>
+
+      <!-- 文字本体渐变 -->
+      <linearGradient id="textGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#ffeedd"/>
+        <stop offset="30%" stop-color="#e8a090"/>
+        <stop offset="70%" stop-color="#c43a28"/>
+        <stop offset="100%" stop-color="#8a1a10"/>
+      </linearGradient>
+
+      <!-- 合成所有层 -->
+      <feMerge>
+        <feMergeNode in="deepShadow"/>
+        <feMergeNode in="outerGlow"/>
+        <feMergeNode in="blurredGoldOutline"/>
+        <feMergeNode in="innerGlow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- 绝杀弹字：更大、更慢、更沉重 -->
+    <filter id="mateMetal" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5" result="blurShadow"/>
+      <feOffset dx="0" dy="8" result="offsetShadow"/>
+      <feFlood flood-color="#0a0502" flood-opacity="0.85"/>
+      <feComposite in2="offsetShadow" operator="in" result="deepShadow"/>
+
+      <feMorphology operator="dilate" radius="5" in="SourceAlpha" result="thickOutline"/>
+      <feFlood flood-color="#d4a030" flood-opacity="0.95"/>
+      <feComposite in2="thickOutline" operator="in" result="goldOutline"/>
+      <feGaussianBlur stdDeviation="2.5" result="blurredGoldOutline"/>
+
+      <feGaussianBlur in="SourceAlpha" stdDeviation="10" result="innerGlowBlur"/>
+      <feFlood flood-color="#c43a28" flood-opacity="0.7"/>
+      <feComposite in2="innerGlowBlur" operator="in" result="innerGlow"/>
+
+      <feGaussianBlur in="SourceAlpha" stdDeviation="15" result="outerGlowBlur"/>
+      <feFlood flood-color="#d44a38" flood-opacity="0.6"/>
+      <feComposite in2="outerGlowBlur" operator="in" result="outerGlow"/>
+
+      <feMerge>
+        <feMergeNode in="deepShadow"/>
+        <feMergeNode in="outerGlow"/>
+        <feMergeNode in="blurredGoldOutline"/>
+        <feMergeNode in="innerGlow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- 粒子火花效果（用于吃子/将军瞬间） -->
+    <filter id="sparkle" x="-50%" y="-50%" width="200%" height="200%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.5" numOctaves="2" seed="1" result="noise"/>
+      <feColorMatrix type="matrix" in="noise" values="
+        0 0 0 0 1
+        0 0 0 0 0.9
+        0 0 0 0 0.5
+        0 0 0 3 -1.5" result="sparkles"/>
+      <feComposite operator="in" in="sparkles" in2="SourceGraphic" result="maskedSparkles"/>
+      <feGaussianBlur stdDeviation="1" result="blurredSparkles"/>
+      <feMerge>
+        <feMergeNode in="SourceGraphic"/>
+        <feMergeNode in="blurredSparkles"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- 将军弹字 -->
+  <text x="200" y="130" text-anchor="middle" font-family="KaiTi,STKaiti,serif" font-size="120" font-weight="900" fill="url(#textGradient)" filter="url(#metalBlade)">将</text>
+
+  <!-- 绝杀弹字 -->
+  <text x="200" y="130" text-anchor="middle" font-family="KaiTi,STKaiti,serif" font-size="140" font-weight="900" fill="url(#textGradient)" filter="url(#mateMetal)" opacity="0" style="opacity: 0; /* 用于展示两个滤镜效果 */">杀</text>
+</svg>

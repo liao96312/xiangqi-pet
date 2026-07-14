@@ -41,7 +41,7 @@ function createWindow() {
   const savedBounds = readWindowState();
   mainWindow = new BrowserWindow({
     width: savedBounds.width ?? 560,
-    height: savedBounds.height ?? 860,
+    height: savedBounds.height ?? 620,
     ...(savedBounds.x != null && savedBounds.y != null ? { x: savedBounds.x, y: savedBounds.y } : {}),
     minWidth: 430,
     minHeight: 620,

@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+  <defs>
+    <filter id="woodGrain" x="0" y="0" width="100%" height="100%">
+      <!-- Base turbulence for wood grain -->
+      <feTurbulence type="fractalNoise" baseFrequency="0.02 0.1" numOctaves="5" seed="42" result="noise"/>
+      <!-- Colorize the noise -->
+      <feColorMatrix type="matrix" in="noise" values="
+        0.55 0 0 0 0.55
+        0 0.4 0 0 0.3
+        0 0 0.3 0 0.2
+        0 0 0 1 0" result="coloredNoise"/>
+      <!-- Add a second layer of finer grain -->
+      <feTurbulence type="fractalNoise" baseFrequency="0.05 0.3" numOctaves="3" seed="7" result="fineNoise"/>
+      <feColorMatrix type="matrix" in="fineNoise" values="
+        0.2 0 0 0 0.6
+        0 0.15 0 0 0.5
+        0 0 0.1 0 0.3
+        0 0 0 0.5 0" result="fineColored"/>
+      <!-- Composite both noise layers -->
+      <feComposite operator="arithmetic" in="coloredNoise" in2="fineColored" k1="0" k2="1" k3="0.3" k4="0" result="combined"/>
+      <!-- Lighting for depth -->
+      <feDiffuseLighting in="combined" surfaceScale="2" diffuseConstant="1.2" lighting-color="#d4a86a">
+        <feDistantLight azimuth="45" elevation="60"/>
+      </feDiffuseLighting>
+      <feComposite operator="in" in2="combined" result="litWood"/>
+      <!-- Add warm tint -->
+      <feColorMatrix type="matrix" in="litWood" values="
+        1.1 0 0 0 0.05
+        0 0.95 0 0 -0.02
+        0 0 0.85 0 -0.05
+        0 0 0 1 0" result="warmWood"/>
+      <!-- Smooth edges -->
+      <feGaussianBlur stdDeviation="0.3" result="smoothWood"/>
+    </filter>
+    
+    <!-- Varnish / glossy finish -->
+    <filter id="varnish" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.8 0.8" numOctaves="2" seed="1" result="varnishNoise"/>
+      <feColorMatrix type="matrix" in="varnishNoise" values="
+        1 0 0 0 0
+        0 1 0 0 0
+        0 0 1 0 0
+        0 0 0 0.08 0" result="varnishAlpha"/>
+      <feComposite operator="in" in="varnishAlpha" in2="SourceGraphic" result="varnishOverlay"/>
+      <feBlend mode="screen" in="varnishOverlay" in2="SourceGraphic" result="glossy"/>
+    </filter>
+  </defs>
+  
+  <!-- Apply wood grain to full background -->
+  <rect width="100%" height="100%" fill="#e0b070" filter="url(#woodGrain)"/>
+</svg>

@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <defs>
+    <!-- 木/石材质感：多层径向渐变 + 噪点光照 -->
+    <radialGradient id="pieceRedBody" cx="30%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#ffe8d8" />
+      <stop offset="25%" stop-color="#e8a090" />
+      <stop offset="55%" stop-color="#c45a48" />
+      <stop offset="85%" stop-color="#8a2a1a" />
+      <stop offset="100%" stop-color="#5a1510" />
+    </radialGradient>
+
+    <radialGradient id="pieceBlackBody" cx="30%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#8a8a8a" />
+      <stop offset="25%" stop-color="#4a4a4a" />
+      <stop offset="55%" stop-color="#2a2a2a" />
+      <stop offset="85%" stop-color="#1a1a1a" />
+      <stop offset="100%" stop-color="#0a0a0a" />
+    </radialGradient>
+
+    <!-- 边缘高光：内圈金色 -->
+    <radialGradient id="goldRim" cx="50%" cy="50%" r="50%">
+      <stop offset="85%" stop-color="transparent" />
+      <stop offset="92%" stop-color="#d4a848" stop-opacity="0.8" />
+      <stop offset="96%" stop-color="#f8d878" stop-opacity="0.6" />
+      <stop offset="100%" stop-color="transparent" />
+    </radialGradient>
+
+    <!-- 底部投影 -->
+    <filter id="pieceShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#2a1a0a" flood-opacity="0.45"/>
+    </filter>
+
+    <!-- 内部刻字凹槽阴影 -->
+    <filter id="engrave" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="1" result="blur"/>
+      <feOffset dx="1" dy="1.5" result="offsetBlur"/>
+      <feFlood flood-color="#3a0a04" flood-opacity="0.7"/>
+      <feComposite in2="offsetBlur" operator="in" result="shadow"/>
+      <feMerge>
+        <feMergeNode in="shadow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- 刻字外描边（朱砂色） -->
+    <filter id="redStroke" x="-20%" y="-20%" width="140%" height="140%">
+      <feMorphology operator="dilate" radius="2" in="SourceAlpha" result="thick"/>
+      <feFlood flood-color="#8a1a10" flood-opacity="0.9"/>
+      <feComposite in2="thick" operator="in" result="stroke"/>
+      <feMerge>
+        <feMergeNode in="stroke"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- 刻字外描边（墨色） -->
+    <filter id="blackStroke" x="-20%" y="-20%" width="140%" height="140%">
+      <feMorphology operator="dilate" radius="2" in="SourceAlpha" result="thick"/>
+      <feFlood flood-color="#1a1a1a" flood-opacity="0.9"/>
+      <feComposite in2="thick" operator="in" result="stroke"/>
+      <feMerge>
+        <feMergeNode in="stroke"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+</svg>

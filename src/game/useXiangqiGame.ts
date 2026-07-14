@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { chooseAiMove, difficulties, getDifficultyProfile, type DifficultyKey } from './ai';
 import { getBookSuggestion, getBookSuggestions } from './bookGuide';
 import { boardToFen, uciToMove } from './fen';
 import { moveNotation } from './notation';
+import { findMatchingLegalMove, sameMove, sameSquare } from './moveUtils';
+import { undoAutoAi, undoManual, type MoveActor, type UndoEntry } from './undo';
 import {
-  applyMove,
   createInitialState,
-  getBestMove,
   getLegalMoves,
   makeMove,
   posKey,
@@ -14,7 +15,7 @@ import {
   type Pos
 } from './xiangqi';
 
-export type DifficultyKey = 'book' | 'rookie' | 'normal' | 'advanced' | 'strong';
+export type { DifficultyKey };
 
 export interface AnalysisResult {
   ok: boolean;
@@ -27,21 +28,7 @@ export interface AnalysisResult {
   error?: string;
 }
 
-export const difficulties: Array<{
-  key: DifficultyKey;
-  label: string;
-  depth: number;
-  blunderRate: number;
-  delay: number;
-  engineTime: number;
-  useEngine: boolean;
-}> = [
-  { key: 'book', label: '谱招练习', depth: 1, blunderRate: 0, delay: 120, engineTime: 0, useEngine: false },
-  { key: 'rookie', label: '入门', depth: 1, blunderRate: 0.8, delay: 120, engineTime: 0, useEngine: false },
-  { key: 'normal', label: '普通', depth: 1, blunderRate: 0.35, delay: 180, engineTime: 0, useEngine: false },
-  { key: 'advanced', label: '进阶', depth: 2, blunderRate: 0.08, delay: 240, engineTime: 900, useEngine: true },
-  { key: 'strong', label: '强一些', depth: 3, blunderRate: 0, delay: 320, engineTime: 2200, useEngine: true }
-];
+export { difficulties };
 
 const SAVED_SETTINGS_KEY = 'xiangqi-pet-settings';
 
@@ -79,11 +66,14 @@ function isDifficultyKey(value: unknown): value is DifficultyKey {
   return typeof value === 'string' && difficulties.some((item) => item.key === value);
 }
 
+export type UseXiangqiGameReturn = ReturnType<typeof useXiangqiGame>;
+
 export function useXiangqiGame() {
   const savedSettings = useMemo(readSavedSettings, []);
   const [state, setState] = useState<GameState>(() => createInitialState());
   const stateRef = useRef(state);
-  const [undoStack, setUndoStack] = useState<GameState[]>([]);
+  const positionIdRef = useRef(0);
+  const [undoStack, setUndoStack] = useState<UndoEntry[]>([]);
   const [selected, setSelected] = useState<Pos | null>(null);
   const [hint, setHint] = useState<Move | null>(null);
   const [thinking, setThinking] = useState(false);
@@ -106,6 +96,10 @@ export function useXiangqiGame() {
     }
     return map;
   }, [legalMoves]);
+
+  function bumpPosition() {
+    positionIdRef.current += 1;
+  }
 
   useEffect(() => {
     stateRef.current = state;
@@ -144,12 +138,13 @@ export function useXiangqiGame() {
     }
   }, [autoAi, playerSide, state, thinking]);
 
-  function commitMove(fromState: GameState, move: Move) {
+  function commitMove(fromState: GameState, move: Move, actor: MoveActor) {
     if (stateRef.current !== fromState) return null;
     const next = makeMove(fromState, move);
     if (next === fromState || next.history.length === fromState.history.length) return null;
-    setUndoStack((stack) => [...stack, fromState]);
+    setUndoStack((stack) => [...stack, { previous: fromState, actor }]);
     setState(next);
+    bumpPosition();
     return next;
   }
 
@@ -159,6 +154,7 @@ export function useXiangqiGame() {
     setSelected(null);
     setHint(null);
     setThinking(false);
+    bumpPosition();
   }
 
   function switchSide() {
@@ -168,22 +164,18 @@ export function useXiangqiGame() {
     setSelected(null);
     setHint(null);
     setThinking(false);
+    bumpPosition();
   }
 
   function undo() {
-    setUndoStack((stack) => {
-      const lastMove = state.history.at(-1);
-      const lastMovedPiece = lastMove ? state.board[lastMove.to.row][lastMove.to.col] : null;
-      const undoSteps =
-        autoAi && state.turn === playerSide && lastMovedPiece?.side !== playerSide && stack.length >= 2 ? 2 : 1;
-      const previous = stack.at(-undoSteps);
-      if (!previous) return stack;
-      setState(previous);
-      setSelected(null);
-      setHint(null);
-      setThinking(false);
-      return stack.slice(0, -undoSteps);
-    });
+    const result = autoAi ? undoAutoAi(undoStack) : undoManual(undoStack);
+    if (!result) return;
+    setState(result.state);
+    setUndoStack(result.stack);
+    setSelected(null);
+    setHint(null);
+    setThinking(false);
+    bumpPosition();
   }
 
   function choose(pos: Pos) {
@@ -205,7 +197,7 @@ export function useXiangqiGame() {
         return;
       }
 
-      const next = commitMove(state, move);
+      commitMove(state, move, 'player');
       setSelected(null);
       return;
     }
@@ -215,10 +207,13 @@ export function useXiangqiGame() {
 
   function showHint() {
     if (state.winner || thinking) return;
-    const hintState = state;
+    const startPositionId = positionIdRef.current;
     setThinking(true);
     window.setTimeout(() => {
-      if (stateRef.current !== hintState) return;
+      if (positionIdRef.current !== startPositionId) {
+        setThinking(false);
+        return;
+      }
       if (bookPractice && bookSuggestion) {
         setHint(bookSuggestion.move);
         setThinking(false);
@@ -235,8 +230,8 @@ export function useXiangqiGame() {
         return;
       }
 
-      const profile = difficulties.find((item) => item.key === difficulty) ?? difficulties[2];
-      const best = getBestMove(state.board, state.turn, Math.max(profile.depth, 2));
+      const profile = getDifficultyProfile(difficulty);
+      const best = chooseAiMove(state.board, state.turn, Math.max(profile.depth, 2));
       setHint(best);
       setThinking(false);
       if (best) {
@@ -247,14 +242,15 @@ export function useXiangqiGame() {
 
   function makeAiMove(inputState = state) {
     if (inputState.winner || stateRef.current !== inputState) return;
-    const isCurrent = () => stateRef.current === inputState;
-    const profile = difficulties.find((item) => item.key === difficulty) ?? difficulties[2];
+    const startPositionId = positionIdRef.current;
+    const isCurrent = () => positionIdRef.current === startPositionId;
+    const profile = getDifficultyProfile(difficulty);
     setThinking(true);
     window.setTimeout(async () => {
       if (!isCurrent()) return;
       const bookMove = bookPractice ? getBookSuggestion(inputState)?.move : null;
       if (bookMove) {
-        const next = commitMove(inputState, bookMove);
+        const next = commitMove(inputState, bookMove, 'ai');
         if (!next && isCurrent()) setState((current) => ({ ...current, message: '谱招应招失败，请悔棋后重试' }));
         setHint(null);
         setThinking(false);
@@ -275,7 +271,7 @@ export function useXiangqiGame() {
           const rawEngineMove = result.ok && result.bestMove ? uciToMove(result.bestMove, inputState.board) : null;
           const engineMove = rawEngineMove ? findMatchingLegalMove(inputState, rawEngineMove) : null;
           if (engineMove) {
-            commitMove(inputState, engineMove);
+            commitMove(inputState, engineMove, 'ai');
             setHint(null);
             setThinking(false);
             return;
@@ -288,7 +284,7 @@ export function useXiangqiGame() {
 
       if (!isCurrent()) return;
       const best = chooseAiMove(inputState.board, inputState.turn, profile.depth, profile.blunderRate);
-      if (best) commitMove(inputState, best);
+      if (best) commitMove(inputState, best, 'ai');
       setHint(null);
       setThinking(false);
     }, profile.delay);
@@ -319,36 +315,4 @@ export function useXiangqiGame() {
     setAutoAi,
     setDifficulty
   };
-}
-
-function chooseAiMove(board: GameState['board'], side: GameState['turn'], depth: number, blunderRate: number) {
-  const allMoves = getLegalMoves(board, side);
-  if (blunderRate >= 0.7 && allMoves.length > 0 && Math.random() < blunderRate) {
-    return allMoves[Math.floor(Math.random() * allMoves.length)];
-  }
-  const best = getBestMove(board, side, depth);
-  if (!best || blunderRate <= 0 || Math.random() > blunderRate) return best;
-
-  const legal = allMoves
-    .map((move) => {
-      const reply = getBestMove(applyMove(board, move), side === 'red' ? 'black' : 'red', Math.max(1, depth - 1));
-      return { ...move, score: -(reply?.score ?? 0) + (move.capture ? 40 : 0) };
-    })
-    .sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
-
-  if (legal.length <= 1) return best;
-  const pool = legal.slice(0, Math.min(4, legal.length));
-  return pool[Math.floor(Math.random() * pool.length)];
-}
-
-function findMatchingLegalMove(state: GameState, move: Move) {
-  return getLegalMoves(state.board, state.turn).find((legal) => sameMove(legal, move));
-}
-
-function sameSquare(a: Pos, b: Pos) {
-  return a.row === b.row && a.col === b.col;
-}
-
-function sameMove(a: Move, b: Move) {
-  return sameSquare(a.from, b.from) && sameSquare(a.to, b.to);
 }

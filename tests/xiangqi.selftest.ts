@@ -1,5 +1,6 @@
 import { strict as assert } from 'node:assert';
 import { createInitialState, getCheckmateTactic, getLegalMoves, makeMove, type Board, type Move, type Piece } from '../src/game/xiangqi';
+import { undoAutoAi, undoManual, type UndoEntry } from '../src/game/undo';
 
 function emptyBoard(): Board {
   return Array.from({ length: 10 }, () => Array.from<Piece | null>({ length: 9 }).fill(null));
@@ -189,6 +190,57 @@ function stalemateMate() {
   expectTactic('困毙', board);
 }
 
+function tacticNameIsStable() {
+  // 同一局面多次调用，结果必须一致（纯函数无随机性）
+  const board = emptyBoard();
+  board[9][0] = { side: 'red', type: 'king' };
+  board[0][4] = { side: 'black', type: 'king' };
+  board[0][3] = { side: 'black', type: 'pawn' };
+  board[0][5] = { side: 'black', type: 'pawn' };
+  board[1][4] = { side: 'black', type: 'pawn' };
+  board[3][4] = { side: 'red', type: 'rook' };
+  board[3][3] = { side: 'red', type: 'horse' };
+  const first = getCheckmateTactic(board, 'red')?.name;
+  for (let i = 0; i < 20; i += 1) {
+    assert.equal(getCheckmateTactic(board, 'red')?.name, first);
+  }
+}
+
+function nonMatePositionReturnsNull() {
+  // 非绝杀局面应返回 null，不误判
+  const state = createInitialState();
+  assert.equal(getCheckmateTactic(state.board, 'red'), null);
+}
+
+function historyState(length: number) {
+  const state = createInitialState();
+  return { ...state, history: Array.from({ length }, () => ({ from: { row: 0, col: 0 }, to: { row: 0, col: 1 } })) };
+}
+
+function undoEntry(length: number, actor: UndoEntry['actor']): UndoEntry {
+  return { previous: historyState(length), actor };
+}
+
+function manualUndoRewindsOneMove() {
+  const result = undoManual([undoEntry(0, 'player'), undoEntry(1, 'ai')]);
+  assert.equal(result?.state.history.length, 1);
+  assert.equal(result?.stack.length, 1);
+}
+
+function autoUndoRewindsCompleteRound() {
+  const result = undoAutoAi([undoEntry(0, 'player'), undoEntry(1, 'ai')]);
+  assert.equal(result?.state.history.length, 0);
+  assert.equal(result?.stack.length, 0);
+}
+
+function autoUndoHandlesPendingReplyAndOpeningAi() {
+  const pendingReply = undoAutoAi([undoEntry(0, 'player')]);
+  assert.equal(pendingReply?.state.history.length, 0);
+
+  const openingAi = undoAutoAi([undoEntry(0, 'ai')]);
+  assert.equal(openingAi?.state.history.length, 0);
+}
+
 illegalMoveKeepsBoard();
 horseLegBlocksJump();
 cannonNeedsScreen();
@@ -206,5 +258,10 @@ doubleCannonMate();
 rookCannonClampMate();
 seaBottomMoonMate();
 stalemateMate();
+tacticNameIsStable();
+nonMatePositionReturnsNull();
+manualUndoRewindsOneMove();
+autoUndoRewindsCompleteRound();
+autoUndoHandlesPendingReplyAndOpeningAi();
 
 console.log('xiangqi selftest ok');
