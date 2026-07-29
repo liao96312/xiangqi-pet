@@ -11,6 +11,8 @@ export interface EngineAnalysis {
   mate?: number;
   pv?: string[];
   depth?: number;
+  nodes?: number;
+  nps?: number;
   error?: string;
 }
 
@@ -20,23 +22,42 @@ export interface AnalyzeInput {
   movetime?: number;
 }
 
+export interface PikafishOptions {
+  threads: number;
+  multiPv: number;
+  hashMb?: number;
+}
+
 export class PikafishBridge {
   private process: ChildProcessWithoutNullStreams | null = null;
   private ready = false;
   private busy = false;
+  private starting: Promise<void> | null = null;
   private buffer = '';
-  private exePath: string | null;
+  private exePaths: string[];
 
-  constructor(private appRoot: string) {
-    this.exePath = findPikafishExecutable(appRoot);
+  constructor(
+    appRoot: string,
+    private options: PikafishOptions = { threads: 6, multiPv: 2, hashMb: 512 }
+  ) {
+    this.exePaths = findPikafishExecutables(appRoot);
   }
 
   isAvailable() {
-    return !!this.exePath;
+    return this.exePaths.length > 0;
+  }
+
+  async warmup() {
+    try {
+      await this.ensureStarted();
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async analyze(input: AnalyzeInput): Promise<EngineAnalysis> {
-    if (!this.exePath) {
+    if (!this.isAvailable()) {
       return { ok: false, engine: 'none', error: 'Pikafish executable not found in engines/' };
     }
     if (this.busy) {
@@ -64,21 +85,52 @@ export class PikafishBridge {
 
   private async ensureStarted() {
     if (this.process && this.ready) return;
-    if (!this.exePath) throw new Error('Pikafish executable missing');
+    if (!this.starting) {
+      this.starting = this.start().finally(() => {
+        this.starting = null;
+      });
+    }
+    await this.starting;
+  }
 
-    this.process = spawn(this.exePath, [], {
-      cwd: path.dirname(this.exePath),
+  private async start() {
+    let lastError: unknown = new Error('Pikafish executable missing');
+    for (const exePath of this.exePaths) {
+      try {
+        await this.startCandidate(exePath);
+        return;
+      } catch (error) {
+        lastError = error;
+        this.stop();
+      }
+    }
+    throw lastError;
+  }
+
+  private async startCandidate(exePath: string) {
+    const proc = spawn(exePath, [], {
+      cwd: path.dirname(exePath),
       windowsHide: true
     });
-    this.process.stderr.on('data', () => {});
-    this.process.on('exit', () => {
-      this.ready = false;
-      this.process = null;
+    this.process = proc;
+    this.buffer = '';
+    proc.stderr.on('data', () => {});
+    proc.on('exit', () => {
+      if (this.process === proc) {
+        this.ready = false;
+        this.process = null;
+      }
+    });
+    proc.on('error', () => {
+      if (this.process === proc) {
+        this.ready = false;
+        this.process = null;
+      }
     });
     await this.commandUntil('uci', (line) => line === 'uciok', 8000);
-    this.process.stdin.write('setoption name Threads value 8\n');
-    this.process.stdin.write('setoption name Hash value 512\n');
-    this.process.stdin.write('setoption name MultiPV value 5\n');
+    proc.stdin.write(`setoption name Threads value ${this.options.threads}\n`);
+    proc.stdin.write(`setoption name Hash value ${this.options.hashMb ?? 512}\n`);
+    proc.stdin.write(`setoption name MultiPV value ${this.options.multiPv}\n`);
     await this.commandUntil('isready', (line) => line === 'readyok', 8000);
     this.ready = true;
   }
@@ -95,6 +147,8 @@ export class PikafishBridge {
       let mate: number | undefined;
       let pv: string[] | undefined;
       let depth: number | undefined;
+      let nodes: number | undefined;
+      let nps: number | undefined;
       const candidateMoves = new Map<number, string>();
       const timeout = windowlessTimeout(() => {
         cleanup();
@@ -114,6 +168,8 @@ export class PikafishBridge {
               mate = info.mate ?? mate;
               pv = info.pv ?? pv;
               depth = info.depth ?? depth;
+              nodes = info.nodes ?? nodes;
+              nps = info.nps ?? nps;
             }
           }
           if (line.startsWith('bestmove ')) {
@@ -128,7 +184,9 @@ export class PikafishBridge {
               scoreCp,
               mate,
               pv,
-              depth
+              depth,
+              nodes,
+              nps
             });
           }
         }
@@ -156,6 +214,14 @@ export class PikafishBridge {
         cleanup();
         reject(new Error(`Pikafish command timed out: ${command}`));
       }, timeoutMs);
+      const onExit = () => {
+        cleanup();
+        reject(new Error(`Pikafish exited during command: ${command}`));
+      };
+      const onError = (error: Error) => {
+        cleanup();
+        reject(error);
+      };
       const onData = (data: Buffer) => {
         this.buffer += data.toString('utf8');
         const lines = this.buffer.split(/\r?\n/);
@@ -168,8 +234,12 @@ export class PikafishBridge {
       const cleanup = () => {
         clearTimeout(timeout);
         proc.stdout.off('data', onData);
+        proc.off('exit', onExit);
+        proc.off('error', onError);
       };
       proc.stdout.on('data', onData);
+      proc.once('exit', onExit);
+      proc.once('error', onError);
       proc.stdin.write(`${command}\n`);
     });
   }
@@ -182,14 +252,14 @@ function positionCommand(fen: string, moves: string[] | undefined) {
   return `position fen ${fen}`;
 }
 
-function findPikafishExecutable(appRoot: string) {
+function findPikafishExecutables(appRoot: string) {
   const engines = path.join(appRoot, 'engines');
-  if (!fs.existsSync(engines)) return null;
+  if (!fs.existsSync(engines)) return [];
   const candidates = walk(engines).filter((file) => {
     const name = path.basename(file).toLowerCase();
-    return name.endsWith('.exe') && name.includes('pikafish');
+    return name.endsWith('.exe') && name.includes('pikafish') && !name.includes('setup') && !name.includes('proxy');
   });
-  return candidates.sort((a, b) => enginePreference(b) - enginePreference(a))[0] ?? null;
+  return candidates.sort((a, b) => enginePreference(b) - enginePreference(a));
 }
 
 function enginePreference(file: string) {
@@ -220,12 +290,16 @@ function parseInfo(line: string) {
   const mateMatch = line.match(/\bscore\s+mate\s+(-?\d+)/);
   const pvMatch = line.match(/\bpv\s+(.+)$/);
   const multipvMatch = line.match(/\bmultipv\s+(\d+)/);
+  const nodesMatch = line.match(/\bnodes\s+(\d+)/);
+  const npsMatch = line.match(/\bnps\s+(\d+)/);
   return {
     depth: depthMatch ? Number(depthMatch[1]) : undefined,
     scoreCp: cpMatch ? Number(cpMatch[1]) : undefined,
     mate: mateMatch ? Number(mateMatch[1]) : undefined,
     pv: pvMatch ? pvMatch[1].trim().split(/\s+/) : undefined,
-    multipv: multipvMatch ? Number(multipvMatch[1]) : undefined
+    multipv: multipvMatch ? Number(multipvMatch[1]) : undefined,
+    nodes: nodesMatch ? Number(nodesMatch[1]) : undefined,
+    nps: npsMatch ? Number(npsMatch[1]) : undefined
   };
 }
 

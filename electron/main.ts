@@ -20,8 +20,8 @@ let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let alwaysOnTop = false;
 let isQuitting = false;
-const analysisEngine = new PikafishBridge(runtimeRoot);
-const playEngine = new PikafishBridge(runtimeRoot);
+const analysisEngine = new PikafishBridge(runtimeRoot, { threads: 2, multiPv: 5, hashMb: 128 });
+const playEngine = new PikafishBridge(runtimeRoot, { threads: 6, multiPv: 2, hashMb: 512 });
 
 process.on('uncaughtException', (error) => {
   logCrash('uncaughtException', error);
@@ -178,6 +178,7 @@ function setAlwaysOnTop(nextValue: boolean) {
 }
 
 if (gotSingleInstanceLock) app.whenReady().then(() => {
+  void playEngine.warmup();
   createWindow();
   createTray();
 

@@ -4,8 +4,8 @@ export const difficulties = [
   { key: 'book', label: '谱招练习', depth: 1, blunderRate: 0, delay: 120, engineTime: 0, useEngine: false },
   { key: 'rookie', label: '入门', depth: 1, blunderRate: 0.8, delay: 120, engineTime: 0, useEngine: false },
   { key: 'normal', label: '普通', depth: 1, blunderRate: 0.35, delay: 180, engineTime: 0, useEngine: false },
-  { key: 'advanced', label: '进阶', depth: 2, blunderRate: 0.08, delay: 240, engineTime: 900, useEngine: true },
-  { key: 'strong', label: '强一些', depth: 3, blunderRate: 0, delay: 320, engineTime: 2200, useEngine: true }
+  { key: 'advanced', label: '进阶', depth: 2, blunderRate: 0.08, delay: 0, engineTime: 900, useEngine: true },
+  { key: 'strong', label: '强一些', depth: 3, blunderRate: 0, delay: 0, engineTime: 1400, useEngine: true }
 ] as const;
 
 export type DifficultyProfile = (typeof difficulties)[number];
