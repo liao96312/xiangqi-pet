@@ -116,7 +116,7 @@ export function useXiangqiGame() {
 
   useEffect(() => {
     let cancelled = false;
-    if (!window.xiangqiPet?.analyze) return;
+    if (!window.xiangqiPet?.analyze || (autoAi && state.turn !== playerSide)) return;
     window.xiangqiPet
       .analyze({ fen: boardToFen(state.board, state.turn), movetime: 450 })
       .then((result) => {
@@ -130,11 +130,11 @@ export function useXiangqiGame() {
     return () => {
       cancelled = true;
     };
-  }, [state.board, state.turn]);
+  }, [autoAi, playerSide, state.board, state.turn]);
 
   useEffect(() => {
     if (autoAi && !thinking && !state.winner && state.turn !== playerSide) {
-      const timer = window.setTimeout(() => makeAiMove(state), 180);
+      const timer = window.setTimeout(() => makeAiMove(state), 0);
       return () => window.clearTimeout(timer);
     }
   }, [autoAi, playerSide, state, thinking]);

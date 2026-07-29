@@ -1,6 +1,6 @@
 {
   "name": "xiangqi-pet",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "description": "Desktop pet style Xiangqi trainer",
   "type": "module",
@@ -10,6 +10,7 @@
     "dev": "concurrently -k \"vite --host 127.0.0.1 --port 5188\" \"wait-on tcp:5188 && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5188 node scripts/start.cjs\"",
     "generate:icon": "node scripts/generate-icon.cjs",
     "check:engine": "node scripts/check-engine.cjs",
+    "benchmark:engine": "tsc -p tsconfig.electron.json && node scripts/benchmark-engine.cjs",
     "build": "tsc -p tsconfig.json && vite build && tsc -p tsconfig.electron.json",
     "selftest": "tsc -p tsconfig.selftest.json && node scripts/mark-selftest-commonjs.cjs && node .selftest/tests/xiangqi.selftest.js",
     "build:installer": "npm run generate:icon && npm run check:engine && npm run selftest && npm run build && electron-builder --win nsis --x64",
@@ -49,10 +50,13 @@
     ],
     "extraResources": [
       {
-        "from": "engines",
+        "from": "engines/pikafish-official",
         "to": "engines",
         "filter": [
-          "**/*"
+          "pikafish*.exe",
+          "*.nnue",
+          "Copying.txt",
+          "AUTHORS"
         ]
       },
       {
