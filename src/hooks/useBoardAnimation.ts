@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { applyMove, createInitialBoard, getCheckmateTactic, isInCheck, posKey, type Move, type Pos } from '../game/xiangqi';
 import { sameMove } from '../game/moveUtils';
+import { classifyHistoryAnimation } from '../game/animationTransition';
 import type { UseXiangqiGameReturn } from '../game/useXiangqiGame';
 
 type MoveAnimation = {
@@ -27,10 +28,18 @@ export function useBoardAnimation(game: UseXiangqiGameReturn) {
     const previous = previousHistoryRef.current;
     const current = game.state.history;
     const timers: number[] = [];
+    const transition = classifyHistoryAnimation(previous, current);
 
-    if (current.length > previous.length) {
-      const move = current.at(-1);
-      if (move) {
+    // A history change invalidates every transient from the previous position.
+    // This must happen before scheduling the next animation: cleanup cancels old
+    // timers, so relying on those timers to clear state can leave ghost pieces
+    // after a fast reset, side switch, undo, or consecutive capture.
+    setMoveAnimation(null);
+    setSettleAnimation(null);
+    setCaptureBurst(null);
+
+    if (transition.kind === 'forward') {
+      const { move } = transition;
         const key = `${current.length}-${posKey(move.from)}-${posKey(move.to)}`;
         setMoveAnimation({ key, move });
         if (move.capture) setCaptureBurst({ key, pos: move.to });
@@ -38,16 +47,13 @@ export function useBoardAnimation(game: UseXiangqiGameReturn) {
         timers.push(window.setTimeout(() => setSettleAnimation({ key, pos: move.to }), 235));
         timers.push(window.setTimeout(() => setSettleAnimation(null), 520));
         timers.push(window.setTimeout(() => setCaptureBurst(null), 520));
-      }
-    } else if (current.length < previous.length && previous.length - current.length <= 2) {
-      const move = previous.at(-1);
-      if (move) {
+    } else if (transition.kind === 'undo') {
+      const { move } = transition;
         const key = `undo-${previous.length}-${posKey(move.to)}-${posKey(move.from)}`;
         setMoveAnimation({ key, move, reverse: true });
         timers.push(window.setTimeout(() => setMoveAnimation(null), 260));
         timers.push(window.setTimeout(() => setSettleAnimation({ key, pos: move.from }), 235));
         timers.push(window.setTimeout(() => setSettleAnimation(null), 520));
-      }
     }
 
     previousHistoryRef.current = current;

@@ -7,5 +7,5 @@
     "isolatedModules": false,
     "types": ["node"]
   },
-  "include": ["src/game/xiangqi.ts", "src/game/undo.ts", "tests/**/*.ts"]
+  "include": ["src/game/xiangqi.ts", "src/game/undo.ts", "src/three/boardGeometry.ts", "src/three/tacticalTokens.ts", "src/three/viewport.ts", "tests/**/*.ts"]
 }

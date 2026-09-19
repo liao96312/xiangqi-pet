@@ -5,10 +5,24 @@ import { CaptureBurst } from './CaptureBurst';
 import { MovingPiece } from './MovingPiece';
 import { PieceSVG } from './PieceSVG';
 
-type MoveAnimation = {
+export type MoveAnimation = {
   key: string;
   move: Move;
   reverse?: boolean;
+};
+
+export type BoardProps = {
+  board: UseXiangqiGameReturn['state']['board'];
+  selected: Pos | null;
+  legalTargetKeys: Set<string>;
+  hint: UseXiangqiGameReturn['hint'];
+  checkmateMove: Move | null;
+  lastMove: UseXiangqiGameReturn['state']['history'][number] | null;
+  moveAnimation: MoveAnimation | null;
+  settleAnimation: { key: string; pos: Pos } | null;
+  captureBurst: { key: string; pos: Pos } | null;
+  flipped: boolean;
+  onChoose: (pos: Pos) => void;
 };
 
 export function Board({
@@ -23,19 +37,7 @@ export function Board({
   captureBurst,
   flipped,
   onChoose
-}: {
-  board: UseXiangqiGameReturn['state']['board'];
-  selected: Pos | null;
-  legalTargetKeys: Set<string>;
-  hint: UseXiangqiGameReturn['hint'];
-  checkmateMove: Move | null;
-  lastMove: UseXiangqiGameReturn['state']['history'][number] | null;
-  moveAnimation: MoveAnimation | null;
-  settleAnimation: { key: string; pos: Pos } | null;
-  captureBurst: { key: string; pos: Pos } | null;
-  flipped: boolean;
-  onChoose: (pos: Pos) => void;
-}) {
+}: BoardProps) {
   const hintFrom = hint ? posKey(hint.from) : '';
   const hintTo = hint ? posKey(hint.to) : '';
   const mateFrom = checkmateMove ? posKey(checkmateMove.from) : '';

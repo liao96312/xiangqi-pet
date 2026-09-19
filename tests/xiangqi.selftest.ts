@@ -1,6 +1,7 @@
 import { strict as assert } from 'node:assert';
 import { createInitialState, getCheckmateTactic, getLegalMoves, makeMove, type Board, type Move, type Piece } from '../src/game/xiangqi';
 import { undoAutoAi, undoManual, type UndoEntry } from '../src/game/undo';
+import { classifyHistoryAnimation } from '../src/game/animationTransition';
 
 function emptyBoard(): Board {
   return Array.from({ length: 10 }, () => Array.from<Piece | null>({ length: 9 }).fill(null));
@@ -43,6 +44,24 @@ function cannonNeedsScreen() {
 
   board[4][4] = { side: 'red', type: 'pawn' };
   assert.equal(hasMove(getLegalMoves(board, 'red'), [5, 4], [2, 4]), true);
+}
+
+function elephantsCanCaptureWithoutCrossingRiver() {
+  const redBoard = emptyBoard();
+  redBoard[9][4] = { side: 'red', type: 'king' };
+  redBoard[0][3] = { side: 'black', type: 'king' };
+  redBoard[7][2] = { side: 'red', type: 'elephant' };
+  redBoard[5][4] = { side: 'black', type: 'pawn' };
+  const redCapture = getLegalMoves(redBoard, 'red').find((move) => hasMove([move], [7, 2], [5, 4]));
+  assert.equal(redCapture?.capture?.side, 'black');
+
+  const blackBoard = emptyBoard();
+  blackBoard[9][5] = { side: 'red', type: 'king' };
+  blackBoard[0][4] = { side: 'black', type: 'king' };
+  blackBoard[2][6] = { side: 'black', type: 'elephant' };
+  blackBoard[4][4] = { side: 'red', type: 'pawn' };
+  const blackCapture = getLegalMoves(blackBoard, 'black').find((move) => hasMove([move], [2, 6], [4, 4]));
+  assert.equal(blackCapture?.capture?.side, 'red');
 }
 
 function cannotExposeKings() {
@@ -241,9 +260,32 @@ function autoUndoHandlesPendingReplyAndOpeningAi() {
   assert.equal(openingAi?.state.history.length, 0);
 }
 
+function animationTransitionsDoNotLeakAcrossPositionChanges() {
+  const start = createInitialState();
+  const redAdvance = makeMove(start, { from: { row: 6, col: 0 }, to: { row: 5, col: 0 } });
+  const blackAdvance = makeMove(redAdvance, { from: { row: 3, col: 0 }, to: { row: 4, col: 0 } });
+  const redCapture = makeMove(blackAdvance, { from: { row: 5, col: 0 }, to: { row: 4, col: 0 } });
+
+  const forward = classifyHistoryAnimation(blackAdvance.history, redCapture.history);
+  assert.equal(forward.kind, 'forward');
+  if (forward.kind === 'forward') assert.equal(forward.move.capture?.side, 'black');
+
+  const oneStepUndo = classifyHistoryAnimation(redCapture.history, blackAdvance.history);
+  assert.equal(oneStepUndo.kind, 'undo');
+  if (oneStepUndo.kind === 'undo') assert.deepEqual(oneStepUndo.move.to, { row: 4, col: 0 });
+
+  const wholeRoundUndo = classifyHistoryAnimation(redCapture.history, redAdvance.history);
+  assert.equal(wholeRoundUndo.kind, 'undo');
+
+  const newGame = classifyHistoryAnimation(redCapture.history, createInitialState().history);
+  assert.equal(newGame.kind, 'reset');
+  assert.equal(classifyHistoryAnimation(start.history, start.history).kind, 'none');
+}
+
 illegalMoveKeepsBoard();
 horseLegBlocksJump();
 cannonNeedsScreen();
+elephantsCanCaptureWithoutCrossingRiver();
 cannotExposeKings();
 rookBottomMateIsNotSeaBottomMoon();
 flyingKingMateIsFaceToFace();
@@ -263,5 +305,6 @@ nonMatePositionReturnsNull();
 manualUndoRewindsOneMove();
 autoUndoRewindsCompleteRound();
 autoUndoHandlesPendingReplyAndOpeningAi();
+animationTransitionsDoNotLeakAcrossPositionChanges();
 
 console.log('xiangqi selftest ok');

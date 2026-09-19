@@ -41,6 +41,9 @@ type SavedSettings = Partial<{
 
 function readSavedSettings(): SavedSettings {
   if (typeof window === 'undefined') return {};
+  if (['dynamic', 'fullgame'].includes(new URLSearchParams(window.location.search).get('scenario') ?? '')) {
+    return { autoAi: false, difficulty: 'book', playerSide: 'red' };
+  }
   try {
     const raw = window.localStorage.getItem(SAVED_SETTINGS_KEY);
     if (!raw) return {};
@@ -192,9 +195,11 @@ export function useXiangqiGame() {
     const move = legalByFrom.get(posKey(selected))?.find((item) => sameSquare(item.to, pos));
     if (move) {
       if (bookPractice && bookSuggestions.length > 0 && !bookSuggestions.some((item) => sameMove(move, item.move))) {
-        setHint(bookSuggestion.move);
+        const next = commitMove(state, move, 'player');
+        if (next) {
+          setState((current) => ({ ...current, message: `已偏离棋谱，继续按当前局面应对；谱招参考：${bookSuggestions.slice(0, 3).map((item) => item.label).join(' / ')}` }));
+        }
         setSelected(null);
-        setState((current) => ({ ...current, message: `走错谱，可走：${bookSuggestions.slice(0, 3).map((item) => item.label).join(' / ')}` }));
         return;
       }
 
