@@ -37,7 +37,7 @@ engines/
 
 Pikafish 是 GPL-3.0 项目，NNUE 权重也可能有使用限制；如果后续要发布或商用，需要单独确认授权。
 
-## 开发
+## 快速开始
 
 ```bash
 npm install
