@@ -37,7 +37,7 @@ After startup, the app recursively searches `engines/` for `pikafish*.exe`. When
 
 Pikafish is a GPL-3.0 project. NNUE weights may also have usage restrictions. Confirm licensing separately before redistribution or commercial use.
 
-## Development
+## Quick Start
 
 ```bash
 npm install
