@@ -1,0 +1,546 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-12T04:23:56+00:00",
+  "releaseStatus": "generated-content ownership supported by Tencent terms; final release still requires project-owner confirmation of input rights and intended redistribution",
+  "generationSession": "C:/Users/Administrator/WorkBuddy/2026-08-11-17-02-37",
+  "terms": {
+    "service": "https://cloud.tencent.com/document/product/1804/122967",
+    "modelService": "https://cloud.tencent.com/document/product/301/97822",
+    "reviewedOn": "2026-08-12",
+    "summary": "Section 4.3 states that, unless otherwise noted, generated-content rights belong to the user, subject to applicable law, the terms, and third-party input rights."
+  },
+  "assets": [
+    {
+      "piece": "pawn",
+      "label": "卒 / 兵",
+      "side": "red",
+      "file": "public/assets/pawn-infantry-red-hy3-v1.glb",
+      "generationTool": "Tencent Hunyuan 3D text-to-3D (model 3.1 + PBR) via WorkBuddy",
+      "generatedOn": "2026-08-11",
+      "generationJob": "1478679753451626496",
+      "requestedFaces": 18000,
+      "generationOwner": "project owner, through the locally authenticated WorkBuddy session (account identifier intentionally omitted)",
+      "generationInput": "project-owner-authored text prompt; no third-party concept image was supplied as model input",
+      "redSource": "C:/Users/Administrator/WorkBuddy/2026-08-11-17-02-37/xiangqi_pawn_red/xiangqi_pawn_red.glb",
+      "pipeline": "user-generated red GLB -> Blender 5.2 texture optimization (512px)",
+      "bytes": 1698996,
+      "sha256": "F4F5083E89D4A6ABF34A831B4B79636F105A294715A20C5A276391D15E36CE7B",
+      "meshes": 1,
+      "vertices": 15914,
+      "triangles": 18000,
+      "materials": 1,
+      "textures": [
+        {
+          "name": "texture_pbr_20250901",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "texture_pbr_20250901_metallic-texture_pbr_20250901_roughness",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "texture_pbr_20250901_normal",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "animations": []
+    },
+    {
+      "piece": "pawn",
+      "label": "卒 / 兵",
+      "side": "black",
+      "file": "public/assets/pawn-infantry-black-hy3-v1.glb",
+      "generationTool": "Tencent Hunyuan 3D text-to-3D (model 3.1 + PBR) via WorkBuddy",
+      "generatedOn": "2026-08-11",
+      "generationJob": "1478679753451626496",
+      "requestedFaces": 18000,
+      "generationOwner": "project owner, through the locally authenticated WorkBuddy session (account identifier intentionally omitted)",
+      "generationInput": "project-owner-authored text prompt; no third-party concept image was supplied as model input",
+      "redSource": "C:/Users/Administrator/WorkBuddy/2026-08-11-17-02-37/xiangqi_pawn_red/xiangqi_pawn_red.glb",
+      "pipeline": "matching red runtime GLB -> project-authored Blender base-color faction conversion -> 512px black GLB",
+      "bytes": 1665540,
+      "sha256": "0FC94DA1336A88CFB4599CA351B06F48BFAD928280E12B7F894640EE10761A22",
+      "meshes": 1,
+      "vertices": 15914,
+      "triangles": 18000,
+      "materials": 1,
+      "textures": [
+        {
+          "name": "HY3_Pawn_Black_BaseColor",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "texture_pbr_20250901_metallic-texture_pbr_20250901_roughness",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "texture_pbr_20250901_normal",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "animations": []
+    },
+    {
+      "piece": "cannon",
+      "label": "炮",
+      "side": "red",
+      "file": "public/assets/cannon-red-hy3-v1.glb",
+      "generationTool": "Tencent Hunyuan 3D text-to-3D (model 3.1 + PBR) via WorkBuddy",
+      "generatedOn": "2026-08-11",
+      "generationJob": "1478683957608259584",
+      "requestedFaces": 25000,
+      "generationOwner": "project owner, through the locally authenticated WorkBuddy session (account identifier intentionally omitted)",
+      "generationInput": "project-owner-authored text prompt; no third-party concept image was supplied as model input",
+      "redSource": "C:/Users/Administrator/WorkBuddy/2026-08-11-17-02-37/xiangqi_cannon_red/xiangqi_cannon_red.glb",
+      "pipeline": "user-generated red GLB -> Blender 5.2 texture optimization (512px)",
+      "bytes": 1784180,
+      "sha256": "04DA297798BEE579F48F775DFC9466641AEA6BE45EA2164298CC4316EAD48C9B",
+      "meshes": 1,
+      "vertices": 19774,
+      "triangles": 25000,
+      "materials": 1,
+      "textures": [
+        {
+          "name": "texture_pbr_20250901",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "texture_pbr_20250901_metallic-texture_pbr_20250901_roughness",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "texture_pbr_20250901_normal",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "animations": []
+    },
+    {
+      "piece": "cannon",
+      "label": "炮",
+      "side": "black",
+      "file": "public/assets/cannon-black-hy3-v1.glb",
+      "generationTool": "Tencent Hunyuan 3D text-to-3D (model 3.1 + PBR) via WorkBuddy",
+      "generatedOn": "2026-08-11",
+      "generationJob": "1478683957608259584",
+      "requestedFaces": 25000,
+      "generationOwner": "project owner, through the locally authenticated WorkBuddy session (account identifier intentionally omitted)",
+      "generationInput": "project-owner-authored text prompt; no third-party concept image was supplied as model input",
+      "redSource": "C:/Users/Administrator/WorkBuddy/2026-08-11-17-02-37/xiangqi_cannon_red/xiangqi_cannon_red.glb",
+      "pipeline": "matching red runtime GLB -> project-authored Blender base-color faction conversion -> 512px black GLB",
+      "bytes": 1781536,
+      "sha256": "46800E15EEED9F72F0D7463BD9B383E14B755C51E8B655562E88F1CD96D2EEE3",
+      "meshes": 1,
+      "vertices": 19774,
+      "triangles": 25000,
+      "materials": 1,
+      "textures": [
+        {
+          "name": "HY3_Pawn_Black_BaseColor",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "texture_pbr_20250901_metallic-texture_pbr_20250901_roughness",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "texture_pbr_20250901_normal",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "animations": []
+    },
+    {
+      "piece": "chariot",
+      "label": "车",
+      "side": "red",
+      "file": "public/assets/chariot-red-hy3-v1.glb",
+      "generationTool": "Tencent Hunyuan 3D text-to-3D (model 3.1 + PBR) via WorkBuddy",
+      "generatedOn": "2026-08-11",
+      "generationJob": "1478686127027904512",
+      "requestedFaces": 48000,
+      "generationOwner": "project owner, through the locally authenticated WorkBuddy session (account identifier intentionally omitted)",
+      "generationInput": "project-owner-authored text prompt; no third-party concept image was supplied as model input",
+      "redSource": "C:/Users/Administrator/WorkBuddy/2026-08-11-17-02-37/xiangqi_chariot_red/xiangqi_chariot_red.glb",
+      "pipeline": "user-generated red GLB -> Blender 5.2 texture optimization (512px)",
+      "bytes": 2739820,
+      "sha256": "F2B2AACBA2E59497862BC2A4CDEAF9A512D946A857437C7874EF571F985EDD02",
+      "meshes": 1,
+      "vertices": 42123,
+      "triangles": 48000,
+      "materials": 1,
+      "textures": [
+        {
+          "name": "texture_pbr_20250901",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "texture_pbr_20250901_metallic-texture_pbr_20250901_roughness",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "texture_pbr_20250901_normal",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "animations": []
+    },
+    {
+      "piece": "chariot",
+      "label": "车",
+      "side": "black",
+      "file": "public/assets/chariot-black-hy3-v1.glb",
+      "generationTool": "Tencent Hunyuan 3D text-to-3D (model 3.1 + PBR) via WorkBuddy",
+      "generatedOn": "2026-08-11",
+      "generationJob": "1478686127027904512",
+      "requestedFaces": 48000,
+      "generationOwner": "project owner, through the locally authenticated WorkBuddy session (account identifier intentionally omitted)",
+      "generationInput": "project-owner-authored text prompt; no third-party concept image was supplied as model input",
+      "redSource": "C:/Users/Administrator/WorkBuddy/2026-08-11-17-02-37/xiangqi_chariot_red/xiangqi_chariot_red.glb",
+      "pipeline": "matching red runtime GLB -> project-authored Blender base-color faction conversion -> 512px black GLB",
+      "bytes": 2735208,
+      "sha256": "368F088ACBB4450A5B6BD90B8CB3C5F864C93F4D4E3DC08FC76761F90FD2E816",
+      "meshes": 1,
+      "vertices": 42123,
+      "triangles": 48000,
+      "materials": 1,
+      "textures": [
+        {
+          "name": "HY3_chariot_Black_BaseColor",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "texture_pbr_20250901_metallic-texture_pbr_20250901_roughness",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "texture_pbr_20250901_normal",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "animations": []
+    },
+    {
+      "piece": "horse",
+      "label": "马",
+      "side": "red",
+      "file": "public/assets/horse-red-hy3-v1.glb",
+      "generationTool": "Tencent Hunyuan 3D text-to-3D (model 3.1 + PBR) via WorkBuddy",
+      "generatedOn": "2026-08-11",
+      "generationJob": "1478688249706659840",
+      "requestedFaces": 34000,
+      "generationOwner": "project owner, through the locally authenticated WorkBuddy session (account identifier intentionally omitted)",
+      "generationInput": "project-owner-authored text prompt; no third-party concept image was supplied as model input",
+      "redSource": "C:/Users/Administrator/WorkBuddy/2026-08-11-17-02-37/xiangqi_horse_red/xiangqi_horse_red.glb",
+      "pipeline": "user-generated red GLB -> Blender 5.2 texture optimization (512px)",
+      "bytes": 2130184,
+      "sha256": "CBF5287BC11B1DBACC17229D4F6E7369E6F671F0645D105A21018568F4DA7898",
+      "meshes": 1,
+      "vertices": 27258,
+      "triangles": 34000,
+      "materials": 1,
+      "textures": [
+        {
+          "name": "texture_pbr_20250901",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "texture_pbr_20250901_metallic-texture_pbr_20250901_roughness",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "texture_pbr_20250901_normal",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "animations": []
+    },
+    {
+      "piece": "horse",
+      "label": "马",
+      "side": "black",
+      "file": "public/assets/horse-black-hy3-v1.glb",
+      "generationTool": "Tencent Hunyuan 3D text-to-3D (model 3.1 + PBR) via WorkBuddy",
+      "generatedOn": "2026-08-11",
+      "generationJob": "1478688249706659840",
+      "requestedFaces": 34000,
+      "generationOwner": "project owner, through the locally authenticated WorkBuddy session (account identifier intentionally omitted)",
+      "generationInput": "project-owner-authored text prompt; no third-party concept image was supplied as model input",
+      "redSource": "C:/Users/Administrator/WorkBuddy/2026-08-11-17-02-37/xiangqi_horse_red/xiangqi_horse_red.glb",
+      "pipeline": "matching red runtime GLB -> project-authored Blender base-color faction conversion -> 512px black GLB",
+      "bytes": 2086876,
+      "sha256": "9DF2F6EF58F695E2BFABE0AA00C27DDB4DB7899478E4BA5857F31808A3F6AA87",
+      "meshes": 1,
+      "vertices": 27258,
+      "triangles": 34000,
+      "materials": 1,
+      "textures": [
+        {
+          "name": "HY3_horse_Black_BaseColor",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "texture_pbr_20250901_metallic-texture_pbr_20250901_roughness",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "texture_pbr_20250901_normal",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "animations": []
+    },
+    {
+      "piece": "guard",
+      "label": "士 / 仕",
+      "side": "red",
+      "file": "public/assets/guard-red-hy3-v1.glb",
+      "generationTool": "Tencent Hunyuan 3D text-to-3D (model 3.1 + PBR) via WorkBuddy",
+      "generatedOn": "2026-08-11",
+      "generationJob": "1478690068985798656",
+      "requestedFaces": 18000,
+      "generationOwner": "project owner, through the locally authenticated WorkBuddy session (account identifier intentionally omitted)",
+      "generationInput": "project-owner-authored text prompt; no third-party concept image was supplied as model input",
+      "redSource": "C:/Users/Administrator/WorkBuddy/2026-08-11-17-02-37/xiangqi_guard_red/xiangqi_guard_red.glb",
+      "pipeline": "user-generated red GLB -> Blender 5.2 texture optimization (512px)",
+      "bytes": 1564056,
+      "sha256": "82502B38926EE268209EE54FC4D3E0B9BA307007F851959DB393B4D19D16E648",
+      "meshes": 1,
+      "vertices": 14879,
+      "triangles": 17998,
+      "materials": 1,
+      "textures": [
+        {
+          "name": "texture_pbr_20250901",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "texture_pbr_20250901_metallic-texture_pbr_20250901_roughness",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "texture_pbr_20250901_normal",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "animations": []
+    },
+    {
+      "piece": "guard",
+      "label": "士 / 仕",
+      "side": "black",
+      "file": "public/assets/guard-black-hy3-v1.glb",
+      "generationTool": "Tencent Hunyuan 3D text-to-3D (model 3.1 + PBR) via WorkBuddy",
+      "generatedOn": "2026-08-11",
+      "generationJob": "1478690068985798656",
+      "requestedFaces": 18000,
+      "generationOwner": "project owner, through the locally authenticated WorkBuddy session (account identifier intentionally omitted)",
+      "generationInput": "project-owner-authored text prompt; no third-party concept image was supplied as model input",
+      "redSource": "C:/Users/Administrator/WorkBuddy/2026-08-11-17-02-37/xiangqi_guard_red/xiangqi_guard_red.glb",
+      "pipeline": "matching red runtime GLB -> project-authored Blender base-color faction conversion -> 512px black GLB",
+      "bytes": 1507400,
+      "sha256": "4A111C094B22A118D07C86998A1A25693E65E270A4C16D6D39BCB97D9775FDF6",
+      "meshes": 1,
+      "vertices": 14879,
+      "triangles": 17998,
+      "materials": 1,
+      "textures": [
+        {
+          "name": "HY3_guard_Black_BaseColor",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "texture_pbr_20250901_metallic-texture_pbr_20250901_roughness",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "texture_pbr_20250901_normal",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "animations": []
+    },
+    {
+      "piece": "elephant",
+      "label": "象 / 相",
+      "side": "red",
+      "file": "public/assets/elephant-red-hy3-v1.glb",
+      "generationTool": "Tencent Hunyuan 3D text-to-3D (model 3.1 + PBR) via WorkBuddy",
+      "generatedOn": "2026-08-12",
+      "generationJob": null,
+      "requestedFaces": null,
+      "generationOwner": "project owner, through the locally authenticated WorkBuddy session (account identifier intentionally omitted)",
+      "generationInput": "project-owner-authored text prompt; no third-party concept image was supplied as model input",
+      "redSource": "C:/Users/Administrator/WorkBuddy/2026-08-11-17-02-37/xiangqi_elephant_red/xiangqi_elephant_red.glb",
+      "pipeline": "user-generated red GLB -> Blender 5.2 texture optimization (512px)",
+      "bytes": 2445236,
+      "sha256": "4F94B87D55987728B873C4324D66A66C0407CC5A295C600140E5D6E297DFAC44",
+      "meshes": 1,
+      "vertices": 32935,
+      "triangles": 44884,
+      "materials": 1,
+      "textures": [
+        {
+          "name": "texture_pbr_20250901",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "texture_pbr_20250901_metallic-texture_pbr_20250901_roughness",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "texture_pbr_20250901_normal",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "animations": []
+    },
+    {
+      "piece": "elephant",
+      "label": "象 / 相",
+      "side": "black",
+      "file": "public/assets/elephant-black-hy3-v1.glb",
+      "generationTool": "Tencent Hunyuan 3D text-to-3D (model 3.1 + PBR) via WorkBuddy",
+      "generatedOn": "2026-08-12",
+      "generationJob": null,
+      "requestedFaces": null,
+      "generationOwner": "project owner, through the locally authenticated WorkBuddy session (account identifier intentionally omitted)",
+      "generationInput": "project-owner-authored text prompt; no third-party concept image was supplied as model input",
+      "redSource": "C:/Users/Administrator/WorkBuddy/2026-08-11-17-02-37/xiangqi_elephant_red/xiangqi_elephant_red.glb",
+      "pipeline": "matching red runtime GLB -> project-authored Blender base-color faction conversion -> 512px black GLB",
+      "bytes": 2425540,
+      "sha256": "E8ACC0CC0160FBC5B343239DAA7F2C6034B99859A593C80D11E118275D35BBE5",
+      "meshes": 1,
+      "vertices": 32935,
+      "triangles": 44884,
+      "materials": 1,
+      "textures": [
+        {
+          "name": "HY3_elephant_Black_BaseColor",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "texture_pbr_20250901_metallic-texture_pbr_20250901_roughness",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "texture_pbr_20250901_normal",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "animations": []
+    },
+    {
+      "piece": "general",
+      "label": "将 / 帅",
+      "side": "red",
+      "file": "public/assets/general-red-hy3-v2.glb",
+      "generationTool": "Tencent Hunyuan 3D text-to-3D (model 3.1 + PBR) via WorkBuddy",
+      "generatedOn": "2026-08-12",
+      "generationJob": null,
+      "requestedFaces": 32000,
+      "generationOwner": "project owner, through the locally authenticated WorkBuddy session (account identifier intentionally omitted)",
+      "generationInput": "project-owner-authored text prompt; no third-party concept image was supplied as model input",
+      "redSource": "C:/Users/Administrator/WorkBuddy/2026-08-11-17-02-37/xiangqi_king_red/xiangqi_king_red.glb",
+      "pipeline": "user-generated red GLB -> Blender 5.2 texture optimization (512px)",
+      "bytes": 2046952,
+      "sha256": "DEB9B3AE36A0476F4E38FDBBECE1BBD4B0F25FF34B9C0708EF200406D2E4538C",
+      "meshes": 1,
+      "vertices": 25820,
+      "triangles": 32000,
+      "materials": 1,
+      "textures": [
+        {
+          "name": "texture_pbr_20250901",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "texture_pbr_20250901_metallic-texture_pbr_20250901_roughness",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "texture_pbr_20250901_normal",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "animations": []
+    },
+    {
+      "piece": "general",
+      "label": "将 / 帅",
+      "side": "black",
+      "file": "public/assets/general-black-hy3-v2.glb",
+      "generationTool": "Tencent Hunyuan 3D text-to-3D (model 3.1 + PBR) via WorkBuddy",
+      "generatedOn": "2026-08-12",
+      "generationJob": null,
+      "requestedFaces": 32000,
+      "generationOwner": "project owner, through the locally authenticated WorkBuddy session (account identifier intentionally omitted)",
+      "generationInput": "project-owner-authored text prompt; no third-party concept image was supplied as model input",
+      "redSource": "C:/Users/Administrator/WorkBuddy/2026-08-11-17-02-37/xiangqi_king_red/xiangqi_king_red.glb",
+      "pipeline": "matching red runtime GLB -> project-authored Blender base-color faction conversion -> 512px black GLB",
+      "bytes": 1976944,
+      "sha256": "40C64D0605DD70CA9735913F2547475A27F2DD7F72365488573BA55C65612C1C",
+      "meshes": 1,
+      "vertices": 25822,
+      "triangles": 32000,
+      "materials": 1,
+      "textures": [
+        {
+          "name": "HY3_king_Black_BaseColor",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "texture_pbr_20250901_metallic-texture_pbr_20250901_roughness",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "texture_pbr_20250901_normal",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "animations": []
+    }
+  ]
+}

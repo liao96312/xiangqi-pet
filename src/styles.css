@@ -673,6 +673,91 @@ button {
   content: "";
 }
 
+.board-wrap-3d {
+  position: relative;
+}
+
+.board-3d-canvas {
+  display: block;
+  background:
+    radial-gradient(ellipse at 50% 8%, rgba(226, 152, 65, 0.22), rgba(110, 70, 35, 0.06) 22%, transparent 45%),
+    radial-gradient(ellipse at 50% 100%, rgba(91, 38, 25, 0.18), transparent 52%),
+    linear-gradient(180deg, #11171a 0%, #121313 42%, #090a0a 100%);
+}
+
+.board-3d-canvas::before,
+.board-3d-canvas::after {
+  display: none;
+}
+
+.board-3d-canvas > div,
+.board-3d-canvas canvas {
+  position: absolute !important;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.board-3d-fallback {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  color: var(--color-text-secondary);
+  font-size: var(--font-sm);
+}
+
+.board-3d-loading {
+  display: grid;
+  place-items: center;
+  color: var(--color-text-secondary);
+  font-size: var(--font-sm);
+}
+
+.board3d-a11y-grid {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.piece-3d-label {
+  display: block;
+  min-width: 24px;
+  padding: 1px 3px;
+  border: 1px solid rgba(255, 240, 202, 0.5);
+  border-radius: 999px;
+  color: #fff0c9;
+  background: rgba(35, 21, 12, 0.76);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.35);
+  font-family: KaiTi, STKaiti, "Microsoft YaHei", serif;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.2;
+  text-align: center;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.piece-3d-label.red {
+  color: #f8b19a;
+}
+
+.piece-3d-label.black {
+  color: #f2dfb9;
+}
+
+.river-3d-label {
+  color: rgba(91, 55, 28, 0.72);
+  font-family: KaiTi, STKaiti, "Microsoft YaHei", serif;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  text-shadow: 0 1px 0 rgba(255, 225, 162, 0.45);
+}
+
 .board-lines {
   position: absolute;
   inset: 0;
@@ -1596,5 +1681,231 @@ button {
     animation: none;
     transition: none;
     filter: none;
+  }
+}
+
+/* 3D 模式是全窗口战场；棋局信息悬浮在边缘，不再挤压棋盘。 */
+.pet-shell-3d {
+  width: 100vw;
+  max-height: none;
+  gap: 6px;
+  padding: 7px;
+  border-radius: 0;
+  background: #0d0f10;
+}
+
+.pet-shell-3d .game-layout {
+  position: relative;
+  flex: 1 1 auto;
+  display: block;
+  height: 100%;
+  min-height: 0;
+}
+
+.pet-shell-3d .board-column {
+  position: relative;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  display: block;
+}
+
+.pet-shell-3d .board-stage,
+.pet-shell-3d .board-wrap-3d,
+.pet-shell-3d .board-3d-canvas {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.pet-shell-3d .board-stage {
+  border-radius: 14px;
+}
+
+.pet-shell-3d .xiangqi-board {
+  width: 100%;
+  max-width: none;
+  aspect-ratio: auto;
+  border: 0;
+  border-radius: 14px;
+  box-shadow: inset 0 0 0 1px rgba(238, 205, 145, 0.13);
+}
+
+.pet-shell-3d .player-strip {
+  position: absolute;
+  left: 12px;
+  z-index: 18;
+  width: min(330px, 34vw);
+  min-height: 38px;
+  border-color: rgba(232, 208, 166, 0.18);
+  background: rgba(15, 16, 16, 0.74);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(12px);
+}
+
+.pet-shell-3d .board-column > .player-strip:first-child {
+  top: 12px;
+}
+
+.pet-shell-3d .board-column > .player-strip:last-child {
+  bottom: 12px;
+}
+
+.pet-shell-3d .command-panel {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 24;
+  width: clamp(210px, 19vw, 270px);
+  max-height: calc(100% - 24px);
+  overflow-y: auto;
+  border-color: rgba(232, 208, 166, 0.18);
+  background: rgba(13, 14, 14, 0.82);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(14px);
+}
+
+.pet-shell-3d .command-panel.collapsed {
+  bottom: auto;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.pet-shell-3d .command-panel.collapsed > :not(.command-panel-toggle) {
+  display: none;
+}
+
+.command-panel-toggle {
+  display: none;
+}
+
+.pet-shell-3d .command-panel-toggle {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  align-self: flex-end;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(225, 190, 126, 0.28);
+  border-radius: 10px;
+  color: #e8c982;
+  background: rgba(18, 19, 19, 0.86);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.32);
+  cursor: pointer;
+}
+
+.board3d-hud {
+  position: absolute;
+  right: 62px;
+  bottom: 15px;
+  z-index: 22;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px;
+  border: 1px solid rgba(229, 197, 138, 0.2);
+  border-radius: 11px;
+  background: rgba(12, 13, 13, 0.78);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(12px);
+}
+
+.board3d-recovery {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  z-index: 30;
+  padding: 9px 13px;
+  border: 1px solid rgba(232, 196, 129, 0.3);
+  border-radius: 10px;
+  color: #f0d8a7;
+  background: rgba(13, 14, 14, 0.9);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.36);
+  font-size: 12px;
+  transform: translate(-50%, -50%);
+}
+
+.board3d-view-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.board3d-hud button,
+.board3d-hud label {
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 9px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: #aa9f8d;
+  background: transparent;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.board3d-hud button {
+  cursor: pointer;
+}
+
+.board3d-hud button:hover,
+.board3d-hud button.active {
+  border-color: rgba(222, 177, 92, 0.34);
+  color: #f2d391;
+  background: rgba(179, 119, 35, 0.18);
+}
+
+.board3d-hud select {
+  border: 0;
+  color: #f0e4ce;
+  background: #242421;
+  font: inherit;
+  outline: none;
+}
+
+@media (max-width: 720px) {
+  .pet-shell-3d .player-strip {
+    left: 8px;
+    width: min(285px, calc(100% - 68px));
+  }
+
+  .pet-shell-3d .captured-pieces,
+  .pet-shell-3d .turn-mark {
+    display: none;
+  }
+
+  .pet-shell-3d .command-panel {
+    top: 8px;
+    right: 8px;
+    bottom: 8px;
+    width: min(270px, calc(100% - 16px));
+  }
+
+  .board3d-hud {
+    right: 8px;
+    bottom: 8px;
+    max-width: calc(100% - 16px);
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .board3d-view-switch {
+    justify-content: flex-end;
+  }
+
+  .board3d-hud label span {
+    display: none;
   }
 }

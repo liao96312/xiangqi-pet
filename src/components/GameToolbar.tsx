@@ -1,5 +1,8 @@
-import { Bot, ChevronDown, ChevronUp, Lightbulb, RefreshCcw, RotateCw, ScanSearch, Undo2 } from 'lucide-react';
+import { Bot, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Lightbulb, RefreshCcw, RotateCw, ScanSearch, Undo2 } from 'lucide-react';
+import { useState } from 'react';
 import type { DifficultyKey, UseXiangqiGameReturn } from '../game/useXiangqiGame';
+import type { RenderMode } from '../hooks/useRenderMode';
+import type { WebGLStatus } from '../hooks/useWebGLSupport';
 
 export function GameToolbar({
   game,
@@ -10,6 +13,9 @@ export function GameToolbar({
   statusText,
   contextText,
   modeText,
+  renderMode,
+  webglStatus,
+  onRenderModeChange,
   detailsOpen,
   onToggleDetails
 }: {
@@ -21,9 +27,13 @@ export function GameToolbar({
   statusText: string;
   contextText: string;
   modeText: string;
+  renderMode: RenderMode;
+  webglStatus: WebGLStatus;
+  onRenderModeChange: (mode: RenderMode) => void;
   detailsOpen: boolean;
   onToggleDetails: () => void;
 }) {
+  const [panelOpen, setPanelOpen] = useState(false);
   const reviewDisabled = reviewing || game.thinking || !game.engineAvailable;
   const reviewTitle = !game.engineAvailable
     ? '复盘需安装 Pikafish 引擎'
@@ -31,7 +41,12 @@ export function GameToolbar({
       ? '复盘中...'
       : '复盘本局';
   return (
-    <aside className="command-panel" aria-label="对局控制">
+    <aside className={`command-panel ${renderMode === '3d' && !panelOpen ? 'collapsed' : ''}`} aria-label="对局控制">
+      {renderMode === '3d' ? (
+        <button className="command-panel-toggle" type="button" title={panelOpen ? '收起对局控制' : '展开对局控制'} aria-expanded={panelOpen} onClick={() => setPanelOpen((value) => !value)}>
+          {panelOpen ? <ChevronRight size={19} /> : <ChevronLeft size={19} />}
+        </button>
+      ) : null}
       <section className={`turn-card ${game.state.turn}`} aria-live="polite">
         <span className="turn-kicker">
           <i /> {game.state.turn === 'red' ? '红方行棋' : '黑方行棋'}
@@ -71,6 +86,15 @@ export function GameToolbar({
                 {item.label}
               </option>
             ))}
+          </select>
+        </label>
+        <label className="setting-row" title={webglStatus === 'unavailable' ? '当前设备无法创建 WebGL，已保留 2D 模式' : '选择棋盘显示方式'}>
+          <span>棋盘</span>
+          <select value={renderMode} disabled={webglStatus === 'checking'} onChange={(event) => onRenderModeChange(event.target.value as RenderMode)}>
+            <option value="2d">2D</option>
+            <option value="3d" disabled={webglStatus === 'unavailable'}>
+              {webglStatus === 'unavailable' ? '3D不可用' : '3D'}
+            </option>
           </select>
         </label>
         <button className="setting-row" type="button" title="开局换边" onClick={game.switchSide} disabled={game.thinking}>
